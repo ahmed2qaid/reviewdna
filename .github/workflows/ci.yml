@@ -5,12 +5,13 @@ on:
   pull_request:
 permissions:
   contents: read
+  pull-requests: read
 jobs:
   test:
     strategy:
       fail-fast: false
       matrix:
-        node: [20, 22]
+        node: [20, 22, 24]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,8 +21,27 @@ jobs:
       - run: npm install --ignore-scripts
       - run: npm run typecheck
       - run: npm test
+      - run: npm run benchmark
       - run: npm run demo
       - uses: actions/upload-artifact@v4
         with:
           name: reviewdna-demo-node-${{ matrix.node }}
           path: demo-output/
+  action-smoke:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./action
+        with:
+          repository: ${{ github.repository }}
+          max-prs: '5'
+          artifact-name: reviewdna-action-smoke
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t reviewdna:test .
+      - name: Smoke-test Docker CLI
+        run: docker run --rm reviewdna:test --version

@@ -1,0 +1,15 @@
+[
+  {"body":"Every API endpoint must validate incoming payloads before the service layer.","candidate":true,"category":"api-design"},
+  {"body":"Behavior changes should always include a regression test.","candidate":true,"category":"testing"},
+  {"body":"Database access should live in the repository layer, not controllers.","candidate":true,"category":"architecture"},
+  {"body":"Never log authentication tokens or credentials.","candidate":true,"category":"security"},
+  {"body":"Avoid N+1 queries in list endpoints.","candidate":true,"category":"performance"},
+  {"body":"Public APIs should always include documentation for their behavior.","candidate":true,"category":"documentation"},
+  {"body":"Use native fetch instead of the axios dependency.","candidate":true,"category":"dependency"},
+  {"body":"Exceptions should always be handled or rethrown with context.","candidate":true,"category":"error-handling"},
+  {"body":"Prefer camelCase naming for request fields.","candidate":true,"category":"naming"},
+  {"body":"Duplicate parsing logic should be extracted into a reusable helper.","candidate":true,"category":"maintainability"},
+  {"body":"Formatting must follow the repository Prettier configuration.","candidate":true,"category":"style"},
+  {"body":"Tests should avoid network access and use deterministic fixtures.","candidate":true,"category":"testing"},
+  {"body":"LGTM","candidate":false},{"body":"Thanks!","candidate":false},{"body":"Why is this needed?","candidate":false},{"body":"This fails when x is zero.","candidate":false},{"body":"For this temporary migration only, use the legacy parser.","candidate":false},{"body":"Could this value be null?","candidate":false},{"body":"Nice work.","candidate":false},{"body":"Fix typo","candidate":false},{"body":"This test currently fails on Windows.","candidate":false},{"body":"This is the value returned by the old endpoint.","candidate":false}
+]

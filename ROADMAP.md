@@ -6,10 +6,8 @@ The target is a production-quality v1.0, not a toy demo.
 - TypeScript workspace and typed schema
 - GitHub PR/review collector
 - deterministic classification and rule discovery
-- evidence aggregation
-- explainable confidence score
-- basic conflict detection
-- scope inference
+- evidence aggregation and explainable confidence score
+- basic conflict detection and scope inference
 - static interactive dashboard
 - AGENTS / Claude / Cursor / Markdown exports
 - fixture demo, tests, CI, security baseline
@@ -19,8 +17,9 @@ The target is a production-quality v1.0, not a toy demo.
 - before/after diff linking
 - accepted/rejected suggestion inference
 - CODEOWNERS-aware evidence weighting
-- robust bot filtering
-- benchmark dataset and precision/recall metrics
+- ✅ robust baseline bot filtering
+- ✅ synthetic regression benchmark with precision/recall/category quality gates
+- real-world labeled benchmark calibration
 
 ## 0.3 — Semantic intelligence
 - embeddings abstraction
@@ -33,7 +32,7 @@ The target is a production-quality v1.0, not a toy demo.
 ## 0.4 — Documentation drift
 - ✅ scan AGENTS.md, CLAUDE.md, CONTRIBUTING.md, Copilot/Cursor rules
 - ✅ mark documented vs undocumented conventions and coverage percentage
-- detect historical guidance that conflicts with current review behavior
+- ✅ baseline opposite-guidance drift detection
 - generate CONTRIBUTING.suggested.md
 
 ## 0.5 — Incremental engine
@@ -42,20 +41,21 @@ The target is a production-quality v1.0, not a toy demo.
 - resumable pipeline checkpoints
 - incremental PR scans
 - cost estimator for optional LLM stages
-- redaction mode
+- ✅ redaction mode for generated reports (reviewers/paths/evidence text)
+- richer secret/PII redaction
 
 ## 0.6 — GitHub-native workflow
-- production GitHub Action distribution
+- ✅ composite GitHub Action with artifact upload and smoke test
+- stable tagged Action distribution
 - scheduled Watch mode
 - report artifact and GitHub Pages deployment
 - “new engineering conventions” pull request generation
 - human promote/ignore decision file
 
 ## 0.7 — Rich dashboard
-- rule explorer with category/status/scope filters
-- evidence explorer
+- ✅ rule explorer with category/status/search filters and evidence expansion
 - review heatmap
-- convention coverage
+- ✅ convention coverage
 - ✅ CLI snapshot compare (new/removed/strengthened/weakened)
 - richer rule timeline and visual compare periods
 - automation opportunities (ESLint/CI candidates)
@@ -63,7 +63,8 @@ The target is a production-quality v1.0, not a toy demo.
 
 ## 0.8 — Ecosystem
 - plugin interfaces for collectors/providers/exporters/scorers
-- Docker image
+- ✅ Dockerfile and CI smoke build
+- published Docker image
 - public JSON schema package
 - programmatic API examples
 - GitLab collector prototype
