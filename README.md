@@ -15,22 +15,13 @@ node apps/cli/dist/index.js analyze owner/repository
 
 ## Why ReviewDNA?
 
-Engineering standards are rarely fully documented. They live in hundreds or thousands of review comments: “move this into the service layer”, “add a regression test”, “never log a token”, “validate the payload first”. ReviewDNA turns that hidden history into a verifiable knowledge layer.
+Engineering standards are rarely fully documented. They live in hundreds or thousands of review comments. ReviewDNA turns that hidden history into a verifiable knowledge layer.
 
 **History + evidence + recurrence + scope + confidence + documentation drift + agent export.**
 
 ## What you get
 
-An analysis creates:
-
-- `reviewdna.json` — machine-readable analysis data.
-- `reviewdna-report.html` — zero-server interactive dashboard.
-- `engineering-dna.md` — shareable Markdown.
-- `AGENTS.suggested.md` — evidence-backed agent suggestions.
-- `CLAUDE.suggested.md` — Claude Code suggestions.
-- `cursor.suggested.mdc` — Cursor suggestions.
-
-The target repository is never modified. Generated policy files are suggestions that require human review.
+An analysis creates `reviewdna.json`, a zero-server `reviewdna-report.html`, `engineering-dna.md`, and suggested AGENTS/Claude/Cursor instruction files. The target repository is never modified and generated policy requires human review.
 
 ## Quick start
 
@@ -41,57 +32,56 @@ npm install
 npm run build
 node apps/cli/dist/index.js doctor
 node apps/cli/dist/index.js analyze-fixture fixtures/reviews.json --out demo-output
-```
-
-Analyze a GitHub repository:
-
-```bash
 GITHUB_TOKEN=github_pat_xxx node apps/cli/dist/index.js analyze owner/repo --max-prs 100 --min-evidence 2
 ```
 
-A token is optional for small public scans but strongly recommended. With a token, ReviewDNA also attempts to read resolved review-thread state for stronger evidence.
+With a GitHub token, ReviewDNA also attempts to read resolved review-thread state. By default, bot guidance is excluded and at least two pieces of review evidence are required before a convention is promoted.
 
-## Incremental analysis
+## Incremental analysis and Watch
 
-ReviewDNA keeps a gitignored local `.reviewdna/` collection cache. Each Pull Request is keyed by its GitHub `updated_at` value. Later runs reuse review records from unchanged PRs and fetch only new or changed PRs.
-
-```bash
-node apps/cli/dist/index.js analyze owner/repo --cache-dir .reviewdna
-node apps/cli/dist/index.js analyze owner/repo --refresh-cache
-node apps/cli/dist/index.js analyze owner/repo --no-cache
-```
-
-`--redact` and `--redact-evidence` automatically disable the raw-review cache so a redacted report does not silently leave an unredacted local cache.
-
-## Watch conventions over time
-
-The first Watch run creates a baseline. Later runs generate `reviewdna-delta.json` and `reviewdna-delta.md` showing new, removed, strengthened and weakened conventions.
+ReviewDNA keeps a gitignored `.reviewdna/` collection cache keyed by each Pull Request's GitHub `updated_at`. Later runs fetch only new or changed PRs. Use `--no-cache` or `--refresh-cache` when needed. Redaction disables raw-review caching automatically.
 
 ```bash
 node apps/cli/dist/index.js watch owner/repo --out reviewdna-watch
-```
-
-You can also compare any two snapshots directly:
-
-```bash
 node apps/cli/dist/index.js compare before/reviewdna.json after/reviewdna.json
 ```
 
+Watch creates a baseline on the first run and later writes `reviewdna-delta.json` and `reviewdna-delta.md` for new, removed, strengthened and weakened conventions.
+
+## Optional AI refinement
+
+Deterministic mining remains the default. AI refinement is an explicit second stage that may rewrite the wording of already-discovered rules; it cannot create rules or change evidence/confidence.
+
+Local Ollama:
+
+```bash
+node apps/cli/dist/index.js analyze owner/repo --provider ollama --model qwen3:8b
+```
+
+OpenAI-compatible endpoint:
+
+```bash
+REVIEWDNA_LLM_API_KEY=... \
+REVIEWDNA_LLM_BASE_URL=https://provider.example/v1 \
+REVIEWDNA_LLM_MODEL=my-model \
+node apps/cli/dist/index.js analyze owner/repo --provider openai-compatible --max-refine-rules 25
+```
+
+Remote refinement sends selected review evidence to the configured endpoint and ReviewDNA warns when it is enabled. Model output is length-checked, grounded against the deterministic rule/evidence, and prompt-injection-like output is rejected.
+
 ## Evidence, not vibes
 
-ReviewDNA does not promote every comment into policy. By default a convention needs at least two pieces of evidence, bot-authored guidance is excluded, and resolved review threads contribute less confidence than explicitly accepted evidence. Every rule records evidence count, reviewer diversity, time span, inferred scope, confidence components, documentation state and source links.
+ReviewDNA records source links, evidence count, reviewer diversity, first/last seen dates, inferred scope, accepted/resolved signals, recency, persistence, conflicts and an explainable confidence breakdown. Resolved threads are deliberately weighted below explicitly accepted evidence.
 
-ReviewDNA also checks common instruction files (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, Copilot instructions and Cursor rules). It reports documentation coverage and flags baseline cases where documented guidance points in the opposite direction from repeated historical review guidance.
+It also checks common repository instructions (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, Copilot instructions and Cursor rules), reports documentation coverage and flags baseline opposite-guidance drift.
 
 ## Quality gates
 
-The repository includes fixture-driven tests plus a labeled synthetic classification benchmark. CI measures candidate precision/recall and category accuracy and fails if the baseline regresses. The synthetic benchmark is a regression guard, **not a claim of real-world 100% accuracy**.
-
-CI currently exercises Node.js 20, 22 and 24, the benchmark, demo generation, Docker build/smoke, and the composite GitHub Action itself.
+The repository includes fixture-driven tests plus a labeled synthetic classification benchmark. The benchmark is a regression guard, **not a claim of 100% real-world accuracy**. CI exercises Node.js 20/22/24, benchmark/demo generation, Docker, and the composite GitHub Action itself.
 
 ## Local-first by design
 
-Deterministic analysis works without any AI provider. Optional OpenAI-compatible and Ollama adapters are isolated behind a provider interface and are not required for core operation. Review text is treated as **untrusted data**, not model instructions.
+Deterministic analysis requires no AI account. Ollama can refine rules locally. Remote providers are explicit opt-in. Review text is always treated as **untrusted data**, not model instructions.
 
 ## Architecture
 
@@ -99,21 +89,15 @@ Deterministic analysis works without any AI provider. Optional OpenAI-compatible
 GitHub → Collector → Normalizer → Classifier → Rule Discovery
        → Evidence / Confidence / Conflict Analysis
        → Documentation Coverage / Drift
+       → optional grounded wording refinement
        → JSON + Agent Exports + Static Dashboard
 ```
 
-The core is split into classification, discovery/scoring, documentation/redaction and historical comparison modules. See [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`ROADMAP.md`](ROADMAP.md).
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`ROADMAP.md`](ROADMAP.md).
 
-## Privacy
+## Privacy & security
 
-- no ReviewDNA account
-- no telemetry
-- GitHub tokens are not serialized into reports
-- HTML output escapes review-derived text
-- output redaction can pseudonymize reviewers and paths and remove evidence text
-- raw collection caching is opt-out and automatically disabled under redaction
-
-See [`SECURITY.md`](SECURITY.md).
+No ReviewDNA account or telemetry is required. Tokens are not serialized into reports. HTML output escapes review-derived content. Output redaction can pseudonymize reviewers/paths and remove raw evidence text. See [`SECURITY.md`](SECURITY.md).
 
 ## GitHub Action
 
@@ -126,7 +110,7 @@ See [`SECURITY.md`](SECURITY.md).
     redact: 'false'
 ```
 
-The composite Action builds ReviewDNA, analyzes the target and uploads the generated artifacts. Pin a commit SHA instead of `main` in security-sensitive workflows until stable version tags are published.
+Pin a commit SHA in security-sensitive workflows until stable version tags exist.
 
 ## Docker
 
@@ -137,7 +121,7 @@ docker run --rm -e GITHUB_TOKEN reviewdna analyze owner/repo --max-prs 100
 
 ## Roadmap
 
-The next differentiating work is before/after diff acceptance evidence, provider-independent semantic clustering, rule evolution, scheduled GitHub-native Watch reports, knowledge PRs, GitHub Pages demos and real-world benchmark calibration.
+Next differentiating work: before/after diff acceptance evidence, provider-independent semantic clustering, rule evolution, scheduled GitHub-native Watch reports, knowledge PRs, GitHub Pages demos and real-world benchmark calibration.
 
 ## Contributing
 

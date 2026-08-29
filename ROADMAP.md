@@ -3,12 +3,11 @@
 The target is a production-quality v1.0, not a toy demo.
 
 ## 0.1 — Foundation
-- ✅ TypeScript workspace and typed schema
+- ✅ TypeScript workspace, typed schema and modular core
 - ✅ GitHub PR/review collector
 - ✅ deterministic classification and evidence-backed rule discovery
 - ✅ explainable confidence, scope and baseline conflict detection
-- ✅ interactive static dashboard
-- ✅ AGENTS / Claude / Cursor / Markdown exports
+- ✅ interactive static dashboard and agent exports
 - ✅ tests, CI, CodeQL baseline and security documentation
 
 ## 0.2 — Evidence quality
@@ -21,27 +20,27 @@ The target is a production-quality v1.0, not a toy demo.
 - real-world labeled benchmark calibration
 
 ## 0.3 — Semantic intelligence
+- ✅ optional Ollama and OpenAI-compatible wording refinement with grounding safeguards
 - embeddings abstraction
 - local embedding provider
 - semantic clustering beyond token overlap
 - parent/sub-rule relationships
-- superseded-rule detection
-- rule evolution timeline
+- superseded-rule detection and rule evolution timeline
 
 ## 0.4 — Documentation drift
-- ✅ scan AGENTS.md, CLAUDE.md, CONTRIBUTING.md and common Copilot/Cursor rules
-- ✅ documented vs undocumented convention coverage
+- ✅ common AGENTS/CLAUDE/CONTRIBUTING/Copilot/Cursor scanning
+- ✅ documented vs undocumented coverage
 - ✅ baseline opposite-guidance drift detection
 - semantic documentation conflict analysis
 - generate CONTRIBUTING.suggested.md
 
 ## 0.5 — Incremental engine
-- ✅ `.reviewdna/` PR-state cache using GitHub `updated_at` invalidation
-- ✅ incremental PR collection for unchanged reviews
+- ✅ `.reviewdna/` PR-state cache using GitHub `updated_at`
+- ✅ incremental PR collection
 - content hashes for non-GitHub inputs
 - resumable pipeline checkpoints
 - cost estimator for optional LLM stages
-- ✅ redaction mode and automatic raw-cache disablement under redaction
+- ✅ redaction and automatic raw-cache disablement under redaction
 - richer secret/PII redaction
 
 ## 0.6 — GitHub-native workflow
@@ -50,24 +49,21 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ local Watch mode with JSON/Markdown deltas
 - scheduled hosted Watch mode
 - GitHub Pages report deployment
-- evidence-backed knowledge pull requests
-- human promote/ignore decision file
+- evidence-backed knowledge pull requests and human promote/ignore decisions
 
 ## 0.7 — Rich dashboard
-- ✅ rule explorer with search/category/status filters and evidence expansion
+- ✅ rule explorer with filters/evidence expansion
 - review heatmap
-- ✅ convention coverage and documentation drift
+- ✅ documentation coverage/drift
 - ✅ CLI snapshot compare
 - richer visual rule timeline
-- automation opportunities such as ESLint/CI candidates
-- exportable share cards
+- automation opportunities and exportable share cards
 
 ## 0.8 — Ecosystem
 - plugin interfaces for collectors/providers/exporters/scorers
 - ✅ Dockerfile and CI smoke build
 - published Docker image
-- public JSON schema package
-- programmatic API examples
+- public JSON schema package and programmatic API examples
 - GitLab collector prototype
 
 ## 0.9 — Hardening

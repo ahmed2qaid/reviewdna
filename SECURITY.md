@@ -16,6 +16,9 @@ Current mitigations:
 - A single review is not promoted into a convention by default.
 
 ## Local cache
-Incremental analysis can store raw review records under `.reviewdna/`. The directory is gitignored. `--redact` and `--redact-evidence` disable raw-review caching automatically because a redacted report should not silently leave an unredacted cache behind. Use `--no-cache` for any workflow where local retention is not appropriate.
+Incremental analysis can store raw review records under `.reviewdna/`. The directory is gitignored. `--redact` and `--redact-evidence` disable raw-review caching automatically because a redacted report should not silently leave an unredacted cache behind. Use `--no-cache` when local retention is not appropriate.
 
-Before v1.0 we plan dedicated prompt-injection, XSS, path-handling, token-leakage, malformed-API, and large-input fuzz tests.
+## Optional model providers
+Deterministic mode sends no review text to an AI provider. Ollama can run locally. `openai-compatible` is explicit opt-in and sends selected evidence to the configured endpoint. Model output is treated as untrusted: ReviewDNA rejects suspicious prompt-injection-like responses and requires grounding in the deterministic rule/evidence before accepting rewritten wording. Provider refinement cannot change confidence values or evidence provenance.
+
+Before v1.0 we plan dedicated prompt-injection, XSS, path-handling, token-leakage, malformed-API and large-input fuzz tests.

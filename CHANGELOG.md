@@ -7,12 +7,10 @@
 - Static dashboard and AGENTS/Claude/Cursor/Markdown exports.
 - Resolved review-thread evidence collection with authenticated GitHub GraphQL.
 - Documentation coverage and baseline opposite-guidance drift detection.
-- Snapshot comparison for new, removed, strengthened and weakened conventions.
-- Default two-evidence promotion threshold and bot filtering.
-- Resolved review threads weighted below explicitly accepted evidence.
+- Snapshot comparison plus local Watch reports.
+- Two-evidence promotion threshold and bot filtering.
+- Resolved threads weighted below explicitly accepted evidence.
 - Reviewer/path/evidence redaction mode.
-- Synthetic classification quality gates, Docker packaging and smoke-tested composite GitHub Action.
-- Core split into classification, discovery/scoring, documentation/redaction and comparison modules.
-- Incremental PR collection with `.reviewdna/` cache keyed by PR `updated_at`.
-- Redaction automatically disables the raw-review cache.
-- Local `watch` mode with JSON and Markdown change reports.
+- Synthetic classification quality gates, Docker packaging and smoke-tested GitHub Action.
+- Incremental PR cache using GitHub `updated_at` with redaction-aware cache disablement.
+- Optional Ollama/OpenAI-compatible rule refinement with evidence grounding and prompt-injection output rejection.
