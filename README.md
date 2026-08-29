@@ -46,7 +46,17 @@ Analyze a public GitHub repository:
 GITHUB_TOKEN=github_pat_xxx node apps/cli/dist/index.js analyze owner/repo --max-prs 100
 ```
 
-A token is optional for small public scans but strongly recommended because anonymous GitHub API limits are low.
+A token is optional for small public scans but strongly recommended because anonymous GitHub API limits are low. With a token, ReviewDNA also attempts to read resolved review-thread state for stronger evidence.
+
+ReviewDNA also checks common repository instruction files (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, Copilot instructions, and Cursor rules) and reports **documentation coverage**: which historical conventions are already written down and which remain undocumented.
+
+Compare two analysis snapshots:
+
+```bash
+node apps/cli/dist/index.js compare before/reviewdna.json after/reviewdna.json
+```
+
+This highlights new, removed, strengthened, and weakened conventions.
 
 ## Evidence, not vibes
 
@@ -115,8 +125,8 @@ A composite action scaffold is included under `action/action.yml`. It checks out
 ## Roadmap highlights
 
 - richer semantic clustering with provider-independent embeddings
-- review-thread resolution and before/after diff acceptance evidence
-- documented-vs-undocumented convention detection
+- before/after diff acceptance and rejected-evidence inference (resolved review-thread collection is implemented)
+- documentation-drift conflict detection (documented-vs-undocumented coverage is implemented)
 - lifecycle: emerging / established / stale / superseded
 - stronger contradiction detection
 - incremental cache and resumable scans

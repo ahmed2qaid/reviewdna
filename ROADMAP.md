@@ -15,7 +15,7 @@ The target is a production-quality v1.0, not a toy demo.
 - fixture demo, tests, CI, security baseline
 
 ## 0.2 — Evidence quality
-- review-thread resolution collection
+- ✅ review-thread resolution collection (baseline, token-authenticated GraphQL)
 - before/after diff linking
 - accepted/rejected suggestion inference
 - CODEOWNERS-aware evidence weighting
@@ -31,8 +31,8 @@ The target is a production-quality v1.0, not a toy demo.
 - rule evolution timeline
 
 ## 0.4 — Documentation drift
-- scan AGENTS.md, CLAUDE.md, CONTRIBUTING.md, Copilot/Cursor rules
-- mark documented vs undocumented conventions
+- ✅ scan AGENTS.md, CLAUDE.md, CONTRIBUTING.md, Copilot/Cursor rules
+- ✅ mark documented vs undocumented conventions and coverage percentage
 - detect historical guidance that conflicts with current review behavior
 - generate CONTRIBUTING.suggested.md
 
@@ -56,7 +56,8 @@ The target is a production-quality v1.0, not a toy demo.
 - evidence explorer
 - review heatmap
 - convention coverage
-- rule timeline and compare periods
+- ✅ CLI snapshot compare (new/removed/strengthened/weakened)
+- richer rule timeline and visual compare periods
 - automation opportunities (ESLint/CI candidates)
 - exportable share card
 
