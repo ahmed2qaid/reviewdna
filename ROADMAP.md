@@ -12,8 +12,9 @@ The target is a production-quality v1.0, not a toy demo.
 
 ## 0.2 — Evidence quality
 - ✅ review-thread resolution collection with authenticated GraphQL
-- before/after diff linking
-- accepted/rejected suggestion inference
+- ✅ baseline before/after commit comparison for resolved inline comments
+- ✅ weighted evidence: explicit acceptance > resolved + same-file post-review change > resolved-only
+- rejected suggestion inference
 - CODEOWNERS-aware evidence weighting
 - ✅ bot filtering and minimum-evidence promotion
 - ✅ synthetic precision/recall/category regression benchmark
@@ -47,7 +48,8 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ composite GitHub Action with artifact upload and smoke test
 - stable tagged Action distribution
 - ✅ local Watch mode with JSON/Markdown deltas
-- scheduled hosted Watch mode
+- ✅ richer lifecycle/scope/documentation delta classification
+- ✅ cached scheduled Watch workflow example for fork-based deployments
 - GitHub Pages report deployment
 - evidence-backed knowledge pull requests and human promote/ignore decisions
 
