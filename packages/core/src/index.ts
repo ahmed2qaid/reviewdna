@@ -5,3 +5,5 @@ export { applyDocumentationCoverage, redactAnalysis } from './documentation.js';
 export type { DocumentationSource, RedactionOptions } from './documentation.js';
 export { compareAnalysisResults } from './compare.js';
 export type { AnalysisDelta } from './compare.js';
+export { applyHumanDecisions, decisionTemplate } from './decisions.js';
+export type { DecisionApplicationSummary } from './decisions.js';
