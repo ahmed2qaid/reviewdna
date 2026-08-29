@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    {"path":"packages/schema"},
+    {"path":"packages/core"},
+    {"path":"packages/github"},
+    {"path":"packages/providers"},
+    {"path":"packages/exporters"},
+    {"path":"packages/report"},
+    {"path":"apps/cli"}
+  ]
+}

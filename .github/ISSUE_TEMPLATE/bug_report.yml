@@ -1,0 +1,21 @@
+name: Bug report
+description: Report incorrect or broken ReviewDNA behavior
+title: "[bug] "
+labels: [bug]
+body:
+  - type: textarea
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproduction
+      description: Include the command and a sanitized minimal input when possible.
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: ReviewDNA version
+    validations:
+      required: true

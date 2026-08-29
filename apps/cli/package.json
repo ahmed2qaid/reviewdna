@@ -1,0 +1,1 @@
+{"name":"reviewdna","version":"0.1.0","type":"module","bin":{"reviewdna":"dist/index.js"},"main":"dist/index.js","engines":{"node":">=20"},"dependencies":{"@reviewdna/schema":"0.1.0","@reviewdna/core":"0.1.0","@reviewdna/github":"0.1.0","@reviewdna/providers":"0.1.0","@reviewdna/exporters":"0.1.0","@reviewdna/report":"0.1.0"}}

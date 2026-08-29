@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "target":"ES2022","module":"NodeNext","moduleResolution":"NodeNext","strict":true,"declaration":true,"declarationMap":true,"sourceMap":true,"composite":true,"skipLibCheck":true,"noUncheckedIndexedAccess":true,"exactOptionalPropertyTypes":true,"forceConsistentCasingInFileNames":true,
+    "baseUrl":".",
+    "paths":{"@reviewdna/schema":["packages/schema/src/index.ts"],"@reviewdna/core":["packages/core/src/index.ts"],"@reviewdna/github":["packages/github/src/index.ts"],"@reviewdna/providers":["packages/providers/src/index.ts"],"@reviewdna/exporters":["packages/exporters/src/index.ts"],"@reviewdna/report":["packages/report/src/index.ts"]},
+    "typeRoots":["./types"],"types":["node"]
+  }
+}
