@@ -1,0 +1,26 @@
+name: ReviewDNA Watch
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 6 * * 1'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  TARGET_REPOSITORY: owner/repository
+
+jobs:
+  engineering-dna:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./action
+        with:
+          repository: ${{ env.TARGET_REPOSITORY }}
+          mode: watch
+          max-prs: '500'
+          min-evidence: '3'
+          artifact-name: reviewdna-weekly

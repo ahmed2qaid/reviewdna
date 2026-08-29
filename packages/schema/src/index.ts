@@ -18,6 +18,7 @@ export interface ReviewRecord {
   url: string;
   resolved?: boolean | undefined;
   accepted?: boolean | undefined;
+  changedAfterReview?: boolean | undefined;
   source: 'review-comment' | 'review' | 'issue-comment';
 }
 
@@ -41,6 +42,7 @@ export interface RuleEvidence {
   path?: string | undefined;
   accepted?: boolean | undefined;
   resolved?: boolean | undefined;
+  changedAfterReview?: boolean | undefined;
 }
 
 export interface EngineeringRule {

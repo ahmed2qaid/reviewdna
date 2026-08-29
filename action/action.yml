@@ -4,6 +4,10 @@ inputs:
   repository:
     description: Target repository in owner/name form
     required: true
+  mode:
+    description: Run a one-time analysis or compare against a cached watch baseline
+    required: false
+    default: analyze
   max-prs:
     description: Maximum merged pull requests to scan
     required: false
@@ -20,6 +24,18 @@ inputs:
     description: Pseudonymize reviewer names and paths in generated artifacts
     required: false
     default: 'false'
+  use-cache:
+    description: Reuse PR collection data and watch baselines across workflow runs
+    required: false
+    default: 'true'
+  deep-evidence:
+    description: Compare reviewed commits with merged PR heads to strengthen accepted-change evidence (uses more API calls)
+    required: false
+    default: 'false'
+  fail-on-changes:
+    description: In watch mode, return a non-zero status when conventions change
+    required: false
+    default: 'false'
   artifact-name:
     description: Uploaded artifact name
     required: false
@@ -28,12 +44,23 @@ outputs:
   report-path:
     description: Path to the generated HTML report
     value: ${{ inputs.output }}/reviewdna-report.html
+  delta-path:
+    description: Path to the watch delta report when mode=watch
+    value: ${{ inputs.output }}/reviewdna-delta.md
 runs:
   using: composite
   steps:
     - uses: actions/setup-node@v4
       with:
         node-version: '22'
+    - name: Restore ReviewDNA cache
+      if: ${{ inputs.use-cache == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: .reviewdna
+        key: ${{ runner.os }}-reviewdna-${{ inputs.repository }}-${{ github.run_id }}
+        restore-keys: |
+          ${{ runner.os }}-reviewdna-${{ inputs.repository }}-
     - name: Build ReviewDNA
       shell: bash
       run: npm install --ignore-scripts && npm run build
@@ -44,10 +71,19 @@ runs:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
         EXTRA=""
-        if [ "${{ inputs.redact }}" = "true" ]; then EXTRA="--redact"; fi
-        node "${{ github.action_path }}/../apps/cli/dist/index.js" analyze "${{ inputs.repository }}" --max-prs "${{ inputs.max-prs }}" --min-evidence "${{ inputs.min-evidence }}" --out "${{ inputs.output }}" $EXTRA
+        if [ "${{ inputs.redact }}" = "true" ]; then EXTRA="$EXTRA --redact"; fi
+        if [ "${{ inputs.use-cache }}" != "true" ]; then EXTRA="$EXTRA --no-cache"; fi
+        if [ "${{ inputs.deep-evidence }}" = "true" ]; then EXTRA="$EXTRA --deep-evidence"; fi
+        if [ "${{ inputs.fail-on-changes }}" = "true" ]; then EXTRA="$EXTRA --fail-on-changes"; fi
+        if [ "${{ inputs.mode }}" = "watch" ]; then
+          node "${{ github.action_path }}/../apps/cli/dist/index.js" watch "${{ inputs.repository }}" --max-prs "${{ inputs.max-prs }}" --min-evidence "${{ inputs.min-evidence }}" --out "${{ inputs.output }}" --baseline-file ".reviewdna/watch-baseline.json" $EXTRA
+        else
+          node "${{ github.action_path }}/../apps/cli/dist/index.js" analyze "${{ inputs.repository }}" --max-prs "${{ inputs.max-prs }}" --min-evidence "${{ inputs.min-evidence }}" --out "${{ inputs.output }}" $EXTRA
+        fi
     - name: Upload ReviewDNA report
+      if: ${{ always() }}
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifact-name }}
         path: ${{ inputs.output }}/
+        if-no-files-found: warn

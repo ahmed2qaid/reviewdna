@@ -42,11 +42,27 @@ With a GitHub token, ReviewDNA also attempts to read resolved review-thread stat
 ReviewDNA keeps a gitignored `.reviewdna/` collection cache keyed by each Pull Request's GitHub `updated_at`. Later runs fetch only new or changed PRs. Use `--no-cache` or `--refresh-cache` when needed. Redaction disables raw-review caching automatically.
 
 ```bash
-node apps/cli/dist/index.js watch owner/repo --out reviewdna-watch
+node apps/cli/dist/index.js watch owner/repo --max-prs 500 --out reviewdna-watch
 node apps/cli/dist/index.js compare before/reviewdna.json after/reviewdna.json
 ```
 
-Watch creates a baseline on the first run and later writes `reviewdna-delta.json` and `reviewdna-delta.md` for new, removed, strengthened and weakened conventions.
+The first Watch run creates a baseline. Later runs generate `reviewdna-delta.json` and `reviewdna-delta.md` covering new, removed, strengthened, weakened, lifecycle/scope, and documentation changes. `--fail-on-changes` can turn changes into a CI signal, and `--baseline-file` lets automation persist the baseline separately from report artifacts.
+
+The composite GitHub Action supports `mode: watch` and restores `.reviewdna` with `actions/cache`, so unchanged Pull Request history is reused across scheduled runs. A fork-ready scheduled example is included in [`examples/reviewdna-watch.yml`](examples/reviewdna-watch.yml).
+
+## Evidence, not vibes
+
+ReviewDNA does not equate “thread resolved” with “guidance accepted.” Evidence is deliberately weighted:
+
+- explicit accepted evidence is strongest;
+- resolved guidance is a weaker signal;
+- with `--deep-evidence`, a resolved inline comment is strengthened when the commit that was reviewed is compared with the merged PR head and the same file changed afterward.
+
+The deep signal is still a conservative correlation, not proof that the review comment caused the change. It is opt-in because it requires additional GitHub compare API calls.
+
+Every rule retains source links, evidence count, reviewer diversity, first/last seen dates, inferred scope, recency, persistence, conflict state, documentation state, and an explainable confidence breakdown.
+
+ReviewDNA also checks common repository instructions (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, Copilot instructions and Cursor rules), reports documentation coverage, and flags baseline opposite-guidance drift.
 
 ## Optional AI refinement
 
@@ -69,15 +85,9 @@ node apps/cli/dist/index.js analyze owner/repo --provider openai-compatible --ma
 
 Remote refinement sends selected review evidence to the configured endpoint and ReviewDNA warns when it is enabled. Model output is length-checked, grounded against the deterministic rule/evidence, and prompt-injection-like output is rejected.
 
-## Evidence, not vibes
-
-ReviewDNA records source links, evidence count, reviewer diversity, first/last seen dates, inferred scope, accepted/resolved signals, recency, persistence, conflicts and an explainable confidence breakdown. Resolved threads are deliberately weighted below explicitly accepted evidence.
-
-It also checks common repository instructions (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, Copilot instructions and Cursor rules), reports documentation coverage and flags baseline opposite-guidance drift.
-
 ## Quality gates
 
-The repository includes fixture-driven tests plus a labeled synthetic classification benchmark. The benchmark is a regression guard, **not a claim of 100% real-world accuracy**. CI exercises Node.js 20/22/24, benchmark/demo generation, Docker, and the composite GitHub Action itself.
+The repository includes fixture-driven tests plus a labeled synthetic classification benchmark. The benchmark is a regression guard, **not a claim of 100% real-world accuracy**. CI exercises Node.js 20/22/24, benchmark/demo generation, Docker, the composite GitHub Action, incremental-cache behavior, and deep-evidence collection.
 
 ## Local-first by design
 
@@ -86,20 +96,22 @@ Deterministic analysis requires no AI account. Ollama can refine rules locally. 
 ## Architecture
 
 ```text
-GitHub → Collector → Normalizer → Classifier → Rule Discovery
+GitHub → Incremental Collector → Normalizer → Classifier → Rule Discovery
        → Evidence / Confidence / Conflict Analysis
        → Documentation Coverage / Drift
        → optional grounded wording refinement
-       → JSON + Agent Exports + Static Dashboard
+       → JSON + Agent Exports + Static Dashboard + Watch Delta
 ```
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`ROADMAP.md`](ROADMAP.md).
 
 ## Privacy & security
 
-No ReviewDNA account or telemetry is required. Tokens are not serialized into reports. HTML output escapes review-derived content. Output redaction can pseudonymize reviewers/paths and remove raw evidence text. See [`SECURITY.md`](SECURITY.md).
+No ReviewDNA account or telemetry is required. Tokens are not serialized into reports. HTML output escapes review-derived content. Output redaction can pseudonymize reviewers/paths and remove raw evidence text. Redaction disables the raw-review cache automatically. See [`SECURITY.md`](SECURITY.md).
 
 ## GitHub Action
+
+One-time analysis:
 
 ```yaml
 - uses: ahmed2qaid/reviewdna/action@main
@@ -108,6 +120,18 @@ No ReviewDNA account or telemetry is required. Tokens are not serialized into re
     max-prs: '100'
     min-evidence: '2'
     redact: 'false'
+```
+
+Continuous watch:
+
+```yaml
+- uses: ahmed2qaid/reviewdna/action@main
+  with:
+    repository: owner/repo
+    mode: watch
+    max-prs: '500'
+    min-evidence: '3'
+    deep-evidence: 'false'
 ```
 
 Pin a commit SHA in security-sensitive workflows until stable version tags exist.
@@ -121,7 +145,7 @@ docker run --rm -e GITHUB_TOKEN reviewdna analyze owner/repo --max-prs 100
 
 ## Roadmap
 
-Next differentiating work: before/after diff acceptance evidence, provider-independent semantic clustering, rule evolution, scheduled GitHub-native Watch reports, knowledge PRs, GitHub Pages demos and real-world benchmark calibration.
+Next differentiating work: rejected-suggestion inference, CODEOWNERS-aware evidence, provider-independent semantic clustering, rule evolution, human promote/ignore decisions, knowledge PRs, GitHub Pages demos, and real-world benchmark calibration.
 
 ## Contributing
 
