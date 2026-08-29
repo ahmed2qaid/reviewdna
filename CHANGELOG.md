@@ -14,3 +14,6 @@
 - Synthetic classification quality gates, Docker packaging and smoke-tested GitHub Action.
 - Incremental PR cache using GitHub `updated_at` with redaction-aware cache disablement.
 - Optional Ollama/OpenAI-compatible rule refinement with evidence grounding and prompt-injection output rejection.
+- Rich Watch deltas for lifecycle, scope and documentation changes, plus history snapshots and configurable baseline files.
+- Cached GitHub Action Watch mode with a scheduled fork-ready workflow example.
+- Optional `--deep-evidence` comparison from reviewed commit to merged PR head; same-file post-review changes strengthen resolved evidence without being treated as causal proof.
