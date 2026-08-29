@@ -8,9 +8,14 @@ ReviewDNA processes untrusted repository metadata and human-authored review text
 
 Current mitigations:
 - HTML report output escapes review-derived text.
-- provider prompts state that review text is untrusted data.
-- core analysis never executes code or shell commands from repository content.
+- Provider prompts state that review text is untrusted data.
+- Core analysis never executes code or shell commands from repository content.
 - GitHub tokens are read from environment variables and not serialized into result files.
-- provider adapters require explicit configuration; deterministic mode is the default.
+- Provider adapters require explicit configuration; deterministic mode is the default.
+- Bot-authored review guidance is excluded by default.
+- A single review is not promoted into a convention by default.
 
-Before v1.0 we plan dedicated prompt-injection, XSS, path-handling, token-leakage, and malformed-API fuzz tests.
+## Local cache
+Incremental analysis can store raw review records under `.reviewdna/`. The directory is gitignored. `--redact` and `--redact-evidence` disable raw-review caching automatically because a redacted report should not silently leave an unredacted cache behind. Use `--no-cache` for any workflow where local retention is not appropriate.
+
+Before v1.0 we plan dedicated prompt-injection, XSS, path-handling, token-leakage, malformed-API, and large-input fuzz tests.
