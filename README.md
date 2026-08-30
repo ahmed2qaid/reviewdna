@@ -1,285 +1,378 @@
+<div align="center">
+
 # ReviewDNA 🧬
 
-> **Your reviews already contain your engineering DNA.**
+### Turn years of code reviews into evidence-backed engineering rules.
 
-ReviewDNA mines Pull Request and code-review history into **evidence-backed engineering conventions** for humans and AI coding agents. Every discovered rule links back to the reviews that support it and includes an explainable confidence score.
+**Mine the standards your team actually enforces — then make them usable by humans, coding agents, contributor docs, and GitHub workflows.**
+
+[![CI](https://github.com/ahmed2qaid/reviewdna/actions/workflows/ci.yml/badge.svg)](https://github.com/ahmed2qaid/reviewdna/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/ahmed2qaid/reviewdna/actions/workflows/codeql.yml/badge.svg)](https://github.com/ahmed2qaid/reviewdna/actions/workflows/codeql.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/ahmed2qaid/reviewdna?include_prereleases&sort=semver)](https://github.com/ahmed2qaid/reviewdna/releases)
+[![License](https://img.shields.io/github/license/ahmed2qaid/reviewdna)](LICENSE)
+[![Node](https://img.shields.io/badge/Node-%3E%3D20-339933?logo=node.js&logoColor=white)](package.json)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
+
+[Quick start](#quick-start) · [Demo](#see-it-in-60-seconds) · [Architecture](#architecture) · [Docs](docs/) · [Roadmap](ROADMAP.md) · [Contributing](CONTRIBUTING.md)
+
+</div>
+
+![ReviewDNA showcase](docs/assets/reviewdna-showcase.svg)
+
+---
+
+## Why ReviewDNA?
+
+Engineering standards rarely live in one place. They are scattered across hundreds or thousands of Pull Request comments:
+
+- “Move database access out of controllers.”
+- “Every behavior change needs a regression test.”
+- “Do not log access tokens.”
+- “Use the repository layer for persistence.”
+
+Those decisions disappear into closed PRs. ReviewDNA turns them into a **traceable engineering knowledge layer**.
+
+Every discovered convention keeps its evidence, confidence breakdown, reviewers, scope, history, documentation status, conflicts, and human decisions. ReviewDNA never treats generated rules as policy automatically.
+
+> **History + evidence + recurrence + scope + confidence + drift + evolution + human review.**
+
+## See it in 60 seconds
 
 ```bash
 git clone https://github.com/ahmed2qaid/reviewdna.git
 cd reviewdna
-npm install && npm run build
-node apps/cli/dist/index.js analyze owner/repository
+npm install
+npm run build
+node apps/cli/dist/index.js analyze-fixture fixtures/reviews.json --out demo-output
 ```
 
-> npm/npx distribution is planned after the package surface is stabilized; the repository does not pretend a package is published before it actually is.
+Open:
 
-## Why ReviewDNA?
-
-Engineering standards are rarely fully documented. They live in hundreds or thousands of review comments. ReviewDNA turns that hidden history into a verifiable knowledge layer.
-
-**History + evidence + recurrence + scope + confidence + documentation drift + human decisions + agent export.**
-
-## What you get
-
-An analysis creates:
-
-- `reviewdna.json` — machine-readable rule/evidence data.
-- `reviewdna-report.html` — zero-server interactive dashboard.
-- `engineering-dna.md` — shareable Markdown report.
-- `AGENTS.suggested.md` — evidence-backed agent instructions.
-- `CLAUDE.suggested.md` — Claude Code suggestions.
-- `cursor.suggested.mdc` — Cursor suggestions.
-- `CONTRIBUTING.suggested.md` — recurring undocumented conventions worth reviewing for contributor docs.
-
-The dashboard also exposes Review Hotspots, conservative Automation Opportunities, documentation provenance, rule evolution timelines, and a locally generated 1200×630 SVG share card.
-
-The target repository is never modified and generated policy requires human review.
-
-## Public demo
-
-A reproducible synthetic demo is built from `fixtures/reviews.json` by the real ReviewDNA engine and is ready for GitHub Pages deployment.
-
-Expected Pages URL after the repository's one-time Pages enablement:
-
-**https://ahmed2qaid.github.io/reviewdna/**
-
-Until Pages is enabled in **Settings → Pages → Build and deployment → Source: GitHub Actions**, the `ReviewDNA Public Demo` workflow still builds successfully and uploads the complete `_site/` as a workflow artifact instead of failing.
-
-The demo is explicitly labeled **Synthetic fixture / Synthetic demo**. It does not claim to represent a real repository, team, or maintainer policy.
-
-Build the exact Pages artifact locally:
-
-```bash
-npm run demo:site
+```text
+demo-output/reviewdna-report.html
 ```
 
-This creates `_site/index.html`, `share-card.svg`, `reviewdna.json`, and `engineering-dna.md`. See [`docs/PUBLIC_DEMO.md`](docs/PUBLIC_DEMO.md).
+The fixture is synthetic and exists only to demonstrate the product safely. A real repository analysis uses the same engine.
+
+### Example result
+
+```text
+Repository: owner/repository
+
+Analyzed
+  Pull requests        842
+  Review comments    4,128
+  Reviewers             37
+
+Engineering knowledge
+  Recurring rules       42
+  Undocumented          13
+  Documentation drift    4
+  Automation candidates  7
+```
+
+A discovered rule looks like this:
+
+```text
+Avoid direct database access from controllers.
+
+Confidence: 93%
+Status: Established
+Scope: backend/**
+Evidence: 21 reviews · 6 reviewers
+Documentation: Undocumented
+```
+
+Then ReviewDNA lets you open the original PR evidence instead of asking you to trust a black-box score.
+
+## What ReviewDNA produces
+
+| Output | Purpose |
+| --- | --- |
+| `reviewdna-report.html` | Interactive zero-server dashboard |
+| `reviewdna.json` | Machine-readable analysis contract |
+| `engineering-dna.md` | Shareable engineering knowledge report |
+| `AGENTS.suggested.md` | Evidence-backed coding-agent guidance |
+| `CLAUDE.suggested.md` | Claude Code suggestions |
+| `cursor.suggested.mdc` | Cursor suggestions |
+| `CONTRIBUTING.suggested.md` | Repeated undocumented contributor guidance |
+| `reviewdna-cost.json` | Optional remote-provider token/cost preflight |
+
+The dashboard includes **Review Hotspots**, **Documentation Drift**, **Rule Evolution**, **Automation Opportunities**, evidence dispositions, CODEOWNER signals, human decisions, and an exportable SVG share card.
 
 ## Quick start
 
-Requirements: Node.js 20+.
+### 1. Try the synthetic demo
 
 ```bash
 npm install
 npm run build
 node apps/cli/dist/index.js doctor
 node apps/cli/dist/index.js analyze-fixture fixtures/reviews.json --out demo-output
-GITHUB_TOKEN=github_pat_xxx node apps/cli/dist/index.js analyze owner/repo --max-prs 100 --min-evidence 2
 ```
 
-With a GitHub token, ReviewDNA also attempts to read resolved review-thread state. By default, bot guidance is excluded and at least two pieces of review evidence are required before a convention is promoted.
-
-## Programmatic API and JSON Schema
-
-ReviewDNA's workspace packages can also be consumed directly without invoking the CLI. The repository now exposes a Draft 2020-12 [`AnalysisResult` JSON Schema](packages/schema/analysis-result.schema.json) through the `@reviewdna/schema/analysis-result.schema.json` package subpath, alongside the TypeScript contracts in `@reviewdna/schema`.
-
-Run the executable API example:
+### 2. Analyze a GitHub repository
 
 ```bash
-npm run example:programmatic
+GITHUB_TOKEN=github_pat_xxx \
+node apps/cli/dist/index.js analyze owner/repository \
+  --max-prs 100 \
+  --min-evidence 2
 ```
 
-It calls `@reviewdna/core` directly, derives structured insights, and uses `@reviewdna/report` to write `example-output/reviewdna.json`, an HTML dashboard, and an SVG share card. CI executes this example on Node.js 20, 22, and 24 and validates current engine output against the public JSON Schema contract.
-
-These packages are workspace contracts today; npm publication is still intentionally pending. See [`docs/PROGRAMMATIC_API.md`](docs/PROGRAMMATIC_API.md) for TypeScript imports, JSON Schema usage, and integration guidance.
-
-## Incremental analysis and Watch
-
-ReviewDNA keeps a gitignored `.reviewdna/` collection cache keyed by each Pull Request's GitHub `updated_at`. Later runs fetch only new or changed PRs. Use `--no-cache` or `--refresh-cache` when needed. Redaction disables raw-review caching automatically.
+### 3. Continuously watch for convention changes
 
 ```bash
-node apps/cli/dist/index.js watch owner/repo --max-prs 500 --out reviewdna-watch
-node apps/cli/dist/index.js compare before/reviewdna.json after/reviewdna.json
+GITHUB_TOKEN=github_pat_xxx \
+node apps/cli/dist/index.js watch owner/repository \
+  --max-prs 500 \
+  --resume \
+  --out reviewdna-watch
 ```
 
-The first Watch run creates a baseline. Later runs generate `reviewdna-delta.json` and `reviewdna-delta.md` covering new, removed, strengthened, weakened, lifecycle/scope, documentation, and human-decision changes. `--fail-on-changes` can turn changes into a CI signal, and `--baseline-file` lets automation persist the baseline separately from report artifacts.
+ReviewDNA is **local-first**. Deterministic analysis requires no AI account. Ollama and local embeddings are available for optional semantic stages; remote providers are explicit opt-in.
 
-The composite GitHub Action supports `mode: watch` and restores `.reviewdna` with `actions/cache`, so unchanged Pull Request history is reused across scheduled runs. A fork-ready scheduled example is included in [`examples/reviewdna-watch.yml`](examples/reviewdna-watch.yml).
+## The workflow
 
-For large or remote-provider analyses, ReviewDNA also supports validated pipeline checkpoints (`--resume`), user-priced token/cost preflight, a remote-cost ceiling, and targeted sensitive-data redaction. See [`docs/PIPELINE_HARDENING.md`](docs/PIPELINE_HARDENING.md).
+```mermaid
+flowchart LR
+    A[GitHub / GitLab reviews] --> B[Incremental collectors]
+    B --> C[Normalize + classify]
+    C --> D[Evidence engine]
+    D --> E[Rule discovery]
+    E --> F[Confidence + conflicts]
+    F --> G[Documentation drift]
+    G --> H[Rule evolution]
+    H --> I[Human decisions]
+    I --> J[Dashboard + JSON]
+    I --> K[AGENTS / Claude / Cursor]
+    I --> L[Knowledge Proposal PR]
+```
+
+## Architecture
+
+ReviewDNA keeps collection, analysis, policy decisions, and exports separate so no model or plugin can silently turn a suggestion into repository policy.
+
+```mermaid
+flowchart TB
+    subgraph Sources
+      GH[GitHub]
+      GL[GitLab]
+      DOCS[Repository docs]
+      CO[CODEOWNERS]
+    end
+
+    subgraph Collection
+      COL[Collectors]
+      CACHE[Incremental cache]
+      CKPT[Validated checkpoints]
+    end
+
+    subgraph Intelligence
+      CLS[Classifier]
+      SEM[Optional semantic clustering]
+      EVD[Evidence + dispositions]
+      CONF[Explainable confidence]
+      DRIFT[Documentation support / conflict]
+      EVO[Relationships + evolution]
+    end
+
+    subgraph Governance
+      HD[Human review / ignore / promote / override]
+    end
+
+    subgraph Outputs
+      DASH[Static dashboard]
+      JSON[JSON Schema contract]
+      AG[Agent exports]
+      PROP[Reviewable proposal bundle / PR]
+      SDK[Plugin SDK / programmatic API]
+    end
+
+    GH --> COL
+    GL --> COL
+    DOCS --> COL
+    CO --> COL
+    COL --> CACHE --> CLS
+    CKPT --> CLS
+    CLS --> SEM --> EVD --> CONF --> DRIFT --> EVO --> HD
+    HD --> DASH
+    HD --> JSON
+    HD --> AG
+    HD --> PROP
+    JSON --> SDK
+```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md), [Evidence Model](docs/EVIDENCE_MODEL.md), and [Plugin SDK](docs/PLUGINS.md).
 
 ## Evidence, not vibes
 
-ReviewDNA does not equate “thread resolved” with “guidance accepted.” Evidence is deliberately weighted:
+ReviewDNA deliberately distinguishes between different kinds of evidence:
 
-- explicit accepted evidence is strongest;
-- resolved guidance is a weaker signal;
-- with `--deep-evidence`, a resolved inline comment is strengthened when the commit that was reviewed is compared with the merged PR head and the same file changed afterward.
+- explicit accepted/adopted guidance is strongest;
+- resolved guidance is weaker;
+- explicit rejection becomes a conservative `rejected-candidate` signal;
+- optional deep evidence checks whether the reviewed file changed after the comment;
+- direct CODEOWNER review can strengthen evidence without ranking people.
 
-The deep signal is still a conservative correlation, not proof that the review comment caused the change. It is opt-in because it requires additional GitHub compare API calls.
+A score is explainable and never replaces source links.
 
-Every rule retains source links, evidence count, reviewer diversity, first/last seen dates, inferred scope, recency, persistence, conflict state, documentation state, a stable-ish fingerprint, and an explainable confidence breakdown.
+## Documentation drift
 
-ReviewDNA also checks common repository instructions (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, Copilot instructions and Cursor rules), reports documentation coverage, and can add optional semantic documentation support/conflict matching with auditable lexical/semantic provenance.
+ReviewDNA compares discovered conventions with common repository instructions:
 
-## Human decisions
+- `AGENTS.md`
+- `CLAUDE.md`
+- `CONTRIBUTING.md`
+- GitHub Copilot instructions
+- Cursor rules
 
-ReviewDNA discoveries are **evidence, not policy**. Each discovered convention receives a fingerprint such as `rdna-api-design-4a72bc11`, so a team can keep an explicit, reviewable decision about that convention even when rule ordering changes between scans.
+It reports **documented**, **undocumented**, and **conflicting** guidance, with lexical or optional semantic provenance for every match.
 
-Generate a tracked decision template from an analysis:
+## Human decisions stay in control
+
+Discoveries are evidence — not policy.
 
 ```bash
 node apps/cli/dist/index.js decisions-template reviewdna-output/reviewdna.json
 ```
 
-This creates `reviewdna.decisions.json`. Every entry starts in the neutral `review` state; generating the file does **not** approve any rule.
+`reviewdna.decisions.json` supports:
 
-```json
-{
-  "version": 1,
-  "decisions": [
-    {
-      "fingerprint": "rdna-api-design-4a72bc11",
-      "action": "promote",
-      "reason": "Approved by maintainers"
-    }
-  ]
-}
-```
+- `review` — neutral
+- `ignore` — preserve evidence but exclude from policy exports
+- `promote` — explicitly approve
+- `override` — use maintainer-authored wording while preserving inferred evidence
 
-Supported actions:
+The target repository is never silently modified.
 
-- `review` — neutral; no effect.
-- `ignore` — keep the rule and evidence visible, but exclude it from agent/contributor exports.
-- `promote` — explicitly approve the rule for exports even when automatic thresholds would exclude it.
-- `override` — approve team-authored wording while preserving the original inferred wording, evidence, and confidence.
-
-ReviewDNA automatically reads `reviewdna.decisions.json` when present. Use `--no-decisions` to bypass it or `--decisions path/to/file.json` for another tracked file. Unknown fingerprints are reported rather than silently discarded. Fingerprints are intended as pre-v1 identity anchors; the schema can still evolve before v1.0.
-
-## Knowledge proposal package
-
-Once a team has reviewed an analysis, ReviewDNA can package the exportable conventions into a self-contained review bundle:
+## Knowledge Proposal workflow
 
 ```bash
-node apps/cli/dist/index.js proposal reviewdna-output/reviewdna.json --out reviewdna-proposal
+node apps/cli/dist/index.js proposal reviewdna-output/reviewdna.json \
+  --out reviewdna-proposal
 ```
 
-The bundle contains:
-
-- `reviewdna-proposal.json` — manifest with rule fingerprints, decisions, scopes and evidence links.
-- `REVIEWDNA_PROPOSAL.md` — human-readable proposal with evidence references.
-- `AGENTS.proposed.md`
-- `CLAUDE.proposed.md`
-- `cursor.proposed.mdc`
-- `CONTRIBUTING.proposed.md`
-
-The proposal uses the same policy-selection rules as the agent exports: ignored rules are excluded, promoted/overridden rules are included, and automatically selected rules must pass the confidence/lifecycle/conflict gates. It preserves source evidence URLs so reviewers can verify why each convention exists.
-
-**`proposal` does not modify the target repository and does not open a Pull Request.** It deliberately creates a reviewable package first.
-
-Publishing that already-reviewed bundle is a separate, explicit step and is a true dry-run unless `--apply` is supplied:
+Preview a GitHub publication without writing anything:
 
 ```bash
-node apps/cli/dist/index.js publish-proposal owner/repo reviewdna-proposal \
+node apps/cli/dist/index.js publish-proposal owner/repository reviewdna-proposal \
   --branch reviewdna/proposal-example
-
-# Explicit write only after reviewing the dry run:
-node apps/cli/dist/index.js publish-proposal owner/repo reviewdna-proposal \
-  --branch reviewdna/proposal-example \
-  --apply
 ```
 
-The publisher writes only under `.reviewdna/proposals/<id>/` on a `reviewdna/*` branch and opens a review Pull Request. It never silently overwrites `AGENTS.md`, `CONTRIBUTING.md`, or another repository policy file.
+Explicit write requires `--apply`. The publisher writes only under `.reviewdna/proposals/<id>/` on a `reviewdna/*` branch and opens a review PR. Existing policy files are not overwritten.
 
-## Optional semantic intelligence and AI refinement
+## GitHub Action
 
-Deterministic mining remains the default. Semantic clustering is an optional evidence-grouping stage; AI wording refinement is a separate explicit stage that may rewrite the wording of already-discovered rules. Neither stage can create evidence or bypass human decisions.
+The immutable pre-v1 Action release is currently `v0.1.0`.
+
+```yaml
+- uses: ahmed2qaid/reviewdna/action@v0.1.0
+  with:
+    repository: owner/repository
+    max-prs: '100'
+    min-evidence: '2'
+```
+
+Continuous Watch mode:
+
+```yaml
+- uses: ahmed2qaid/reviewdna/action@v0.1.0
+  with:
+    repository: owner/repository
+    mode: watch
+    max-prs: '500'
+    resume: 'true'
+```
+
+For security-sensitive workflows, pin the exact commit SHA behind a release tag.
+
+## Semantic intelligence is optional
+
+Deterministic mining remains the default.
 
 Local semantic clustering:
 
 ```bash
-node apps/cli/dist/index.js analyze owner/repo \
+node apps/cli/dist/index.js analyze owner/repository \
   --clusterer semantic \
   --embedding-provider local
 ```
 
-Local Ollama wording refinement:
+Local Ollama refinement:
 
 ```bash
-node apps/cli/dist/index.js analyze owner/repo --provider ollama --model qwen3:8b
+node apps/cli/dist/index.js analyze owner/repository \
+  --provider ollama \
+  --model qwen3:8b
 ```
 
-OpenAI-compatible endpoint:
+Remote providers never gain permission to create evidence, change confidence, bypass decisions, or write repository policy.
 
-```bash
-REVIEWDNA_LLM_API_KEY=... \
-REVIEWDNA_LLM_BASE_URL=https://provider.example/v1 \
-REVIEWDNA_LLM_MODEL=my-model \
-node apps/cli/dist/index.js analyze owner/repo --provider openai-compatible --max-refine-rules 25
-```
+## Ecosystem
 
-Remote refinement sends selected review evidence to the configured endpoint and ReviewDNA warns when it is enabled. Model output is length-checked, grounded against the deterministic rule/evidence, and prompt-injection-like output is rejected. Human decisions are applied after optional wording refinement, so a team remains the final policy authority.
+ReviewDNA already includes:
+
+- GitHub collector
+- GitLab collector prototype with self-hosted support
+- `@reviewdna/plugin-sdk` contracts for collectors/providers/exporters/scorers
+- Draft 2020-12 public `AnalysisResult` JSON Schema
+- executable programmatic API example
+- Docker build
+- static docs site and migration guide
+
+See [Programmatic API](docs/PROGRAMMATIC_API.md), [GitLab](docs/GITLAB.md), and [Migration Guide](docs/MIGRATION.md).
 
 ## Quality gates
 
-The repository includes fixture-driven tests plus labeled synthetic classification/semantic regression benchmarks. These benchmarks are regression guards, **not claims of real-world accuracy**. CI exercises Node.js 20/22/24, benchmark generation, the complete reproducible Pages demo site, the executable programmatic API example and JSON Schema contract, release-metadata verification, Docker, the local and immutable released GitHub Actions, incremental-cache behavior, deep-evidence collection, human-decision behavior, redaction, cost/checkpoint behavior, and knowledge-proposal provenance.
+Every merge is expected to pass:
 
-## Local-first by design
+- Node.js 20 / 22 / 24
+- TypeScript strict typecheck
+- regression + schema compatibility tests
+- semantic/classification benchmarks
+- 10k-review synthetic large-repository benchmark
+- Windows / macOS / Linux CLI E2E
+- Docker smoke build
+- local and immutable released Action smoke tests
+- CodeQL
+- docs-site verification
 
-Deterministic analysis requires no AI account. Local feature embeddings and Ollama can keep optional semantic/wording stages local. Remote providers are explicit opt-in. Review text is always treated as **untrusted data**, not model instructions.
+The synthetic benchmarks are regression guards, **not claims of real-world model accuracy**.
 
-## Architecture
+## Security & privacy
 
-```text
-GitHub → Incremental Collector → Normalizer → Classifier → Rule Discovery
-       → Evidence / Confidence / Conflict Analysis
-       → Documentation Coverage / Drift
-       → optional semantic grouping / grounded wording refinement
-       → tracked Human Decisions
-       → Rule Evolution + Structured Insights
-       → JSON + Agent/Contributor Exports + Static Dashboard + Watch Delta
-       → optional local Knowledge Proposal package / explicit review PR
-```
+- Local deterministic mode sends review text nowhere.
+- Review text is treated as untrusted input, never as instructions.
+- HTML/SVG report output escapes review-derived content.
+- Sensitive-data redaction can scrub common credentials and PII.
+- Redaction disables raw caches/checkpoints automatically.
+- Remote semantic/LLM providers are explicit opt-in.
+- Proposal publishing is dry-run-first and requires explicit `--apply`.
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`ROADMAP.md`](ROADMAP.md).
+See [SECURITY.md](SECURITY.md) and the [internal security audit](docs/SECURITY_AUDIT.md).
 
-## Privacy & security
+## Public demo & docs
 
-No ReviewDNA account or telemetry is required. Tokens are not serialized into reports. HTML output escapes review-derived content. Output redaction can pseudonymize reviewers/paths, remove raw evidence text, or selectively scrub common secrets/PII. Redaction disables raw-review caches and checkpoints automatically. See [`SECURITY.md`](SECURITY.md).
-
-## GitHub Action
-
-The first immutable pre-v1 Action release is `v0.1.0`.
-
-One-time analysis:
-
-```yaml
-- uses: ahmed2qaid/reviewdna/action@v0.1.0
-  with:
-    repository: owner/repo
-    max-prs: '100'
-    min-evidence: '2'
-    redact: 'false'
-```
-
-Continuous watch:
-
-```yaml
-- uses: ahmed2qaid/reviewdna/action@v0.1.0
-  with:
-    repository: owner/repo
-    mode: watch
-    max-prs: '500'
-    min-evidence: '3'
-    resume: 'true'
-```
-
-`@main` follows development and is intentionally not a stable reference. For the strongest supply-chain pinning in security-sensitive workflows, use the exact commit SHA behind the release tag.
-
-## Docker
+The reproducible synthetic Pages artifact is built with:
 
 ```bash
-docker build -t reviewdna .
-docker run --rm -e GITHUB_TOKEN reviewdna analyze owner/repo --max-prs 100
+npm run demo:site
+npm run docs:verify
 ```
 
-## Roadmap
-
-Next release-focused work: npm/package publishing, activating the prepared public Pages deployment, an end-to-end Knowledge Proposal PR demo, real-world benchmark calibration, cross-platform E2E, and release/launch assets.
+It contains both the interactive demo and the generated docs site. GitHub Pages requires one-time repository enablement before the prepared workflow can publish it publicly. See [PUBLIC_DEMO.md](docs/PUBLIC_DEMO.md).
 
 ## Contributing
 
-Contributions are welcome. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md), [`ROADMAP.md`](ROADMAP.md), or the open issues.
+Contributions are welcome. Good entry points:
+
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [ROADMAP.md](ROADMAP.md)
+- [Plugin SDK](docs/PLUGINS.md)
+- [open issues](https://github.com/ahmed2qaid/reviewdna/issues)
+
+If ReviewDNA helps preserve engineering knowledge that would otherwise disappear into closed PRs, a ⭐ helps other maintainers discover it.
 
 ## License
 
