@@ -19,3 +19,4 @@ export { estimateTextTokens, estimateEmbeddingCost, estimateRefinementCost, asse
 export type { StagePricing, StageCostEstimate } from './cost.js';
 export { redactSensitiveText } from './sensitive.js';
 export type { SensitiveRedactionResult } from './sensitive.js';
+export { applyAnalysisInsights } from './insights.js';

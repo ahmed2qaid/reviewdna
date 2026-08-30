@@ -53,3 +53,10 @@
 - Expanded sensitive redaction across rule/evidence/reviewer/path/URL/human-decision/rejected-review text and automatically disabled raw caches/checkpoints whenever redaction is active.
 - Added GitHub Action inputs for resume/checkpoints, sensitive redaction, cost estimates, user-supplied pricing and remote-budget enforcement; the scheduled Watch example now restores and resumes validated checkpoints.
 - Added regression tests for stable content identity, checkpoint compatibility, cache schema behavior, cost-budget enforcement and targeted sensitive redaction.
+- Added structured `AnalysisInsights` to `reviewdna.json` with evidence-deduplicated Review Hotspots, per-area percentages, rule counts and category distribution.
+- Added conservative deterministic Automation Opportunities for lint, formatting, type-policy, test, security, dependency and CI enforcement candidates; ignored, superseded and low-confidence rules are excluded.
+- Insights are derived after Human Decisions and after checkpoint resume, so review decisions remain authoritative while the insight stage stays cheap and reproducible.
+- Extended existing privacy controls to redact hotspot paths and automation text/scopes under path or sensitive-text redaction.
+- Added dashboard Review Hotspots and Automation Opportunities panels plus insight summary metrics.
+- Added a standalone 1200×630 ReviewDNA SVG share-card renderer and a local `Download share card` control embedded in the static report with no backend dependency.
+- Added regression tests for hotspot deduplication, automation classification, insight redaction, dashboard rendering, SVG escaping and local share-card download generation.

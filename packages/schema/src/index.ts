@@ -9,12 +9,38 @@ export type EvidenceDisposition = 'accepted' | 'adopted' | 'acknowledged' | 'rej
 export type RuleTimelineEventType = 'introduced' | 'reinforced' | 'adopted' | 'rejected-signal' | 'superseded';
 export type DocumentationMatcher = 'lexical' | 'semantic';
 export type DocumentationMatchKind = 'support' | 'conflict';
+export type AutomationOpportunityKind = 'lint-rule' | 'format-rule' | 'type-policy' | 'test-gate' | 'security-scan' | 'dependency-policy' | 'ci-check';
+export type AutomationOpportunityStrength = 'high' | 'medium';
 
 export interface DocumentationMatch {
   path: string;
   kind: DocumentationMatchKind;
   matcher: DocumentationMatcher;
   score: number;
+}
+
+export interface ReviewHotspot {
+  path: string;
+  evidenceCount: number;
+  ruleCount: number;
+  percentage: number;
+  categories: Record<string, number>;
+}
+
+export interface AutomationOpportunity {
+  fingerprint: string;
+  text: string;
+  category: RuleCategory;
+  kind: AutomationOpportunityKind;
+  strength: AutomationOpportunityStrength;
+  reason: string;
+  suggestedMechanisms: string[];
+  scope: string[];
+}
+
+export interface AnalysisInsights {
+  reviewHotspots: ReviewHotspot[];
+  automationOpportunities: AutomationOpportunity[];
 }
 
 export interface RuleTimelineEvent {
@@ -187,6 +213,7 @@ export interface AnalysisResult {
   summary: AnalysisSummary;
   rules: EngineeringRule[];
   rejected: Array<{id:string; body:string; reason:string}>;
+  insights?: AnalysisInsights | undefined;
   metadata: {
     engineVersion: string;
     mode: 'deterministic' | 'hybrid' | 'llm';
@@ -203,5 +230,6 @@ export interface AnalysisResult {
     documentationMatcher?: 'lexical' | 'semantic' | undefined;
     documentationEmbeddingProvider?: string | undefined;
     documentationSemanticThreshold?: number | undefined;
+    insightsModel?: string | undefined;
   };
 }
