@@ -80,9 +80,9 @@ The final guard prevents chain merging, where A is close to B and B is close to 
 
 ## Thresholds
 
-Providers expose conservative defaults:
+Providers expose conservative starting defaults:
 
-- `local-feature-v1`: `0.28`
+- `local-feature-v1`: `0.24`
 - Ollama embeddings: `0.72`
 - OpenAI-compatible embeddings: `0.76`
 
@@ -91,6 +91,8 @@ Override with:
 ```bash
 --semantic-threshold 0.74
 ```
+
+The local `0.24` threshold is calibrated only against the repository's small semantic regression fixture, where it keeps negative-pair specificity high while recovering more labeled paraphrases. It is **not** presented as a real-world universal optimum.
 
 ReviewDNA records the chosen clusterer, embedding provider and threshold in `reviewdna.json` so analyses remain auditable.
 
