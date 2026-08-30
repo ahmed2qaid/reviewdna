@@ -20,3 +20,4 @@
 - Stable-ish rule fingerprints plus tracked `reviewdna.decisions.json` human decisions (`review`, `ignore`, `promote`, `override`).
 - Human decisions preserve original evidence/confidence, are visible in reports, and are respected by agent exports and Watch comparisons.
 - Added `CONTRIBUTING.suggested.md` for recurring undocumented conventions and a neutral `decisions-template` CLI command.
+- Added a local `proposal` command that packages selected conventions, agent/contributor files and source evidence into a review bundle without modifying the target repository or opening a Pull Request.
