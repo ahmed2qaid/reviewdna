@@ -6,6 +6,8 @@ example-output/
 plugin-example-output/
 e2e-output/
 benchmark-output/
+_docs/
+_site/
 .env
 .env.*
 !.env.example
