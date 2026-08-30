@@ -264,10 +264,10 @@ Explicit write requires `--apply`. The publisher writes only under `.reviewdna/p
 
 ## GitHub Action
 
-The immutable pre-v1 Action release is currently `v0.1.0`.
+The immutable pre-v1 Action release is currently `v0.2.0`.
 
 ```yaml
-- uses: ahmed2qaid/reviewdna/action@v0.1.0
+- uses: ahmed2qaid/reviewdna/action@v0.2.0
   with:
     repository: owner/repository
     max-prs: '100'
@@ -277,7 +277,7 @@ The immutable pre-v1 Action release is currently `v0.1.0`.
 Continuous Watch mode:
 
 ```yaml
-- uses: ahmed2qaid/reviewdna/action@v0.1.0
+- uses: ahmed2qaid/reviewdna/action@v0.2.0
   with:
     repository: owner/repository
     mode: watch
