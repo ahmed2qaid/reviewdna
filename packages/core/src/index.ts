@@ -1,9 +1,13 @@
 export { normalizeReview, classifyReview } from './classification.js';
-export { discoverRules, detectConflicts } from './discovery.js';
-export type { DiscoveryOptions } from './discovery.js';
+export { discoverRules, detectConflicts, deterministicClusters, prepareDiscovery, buildAnalysisFromClusters } from './discovery.js';
+export type { DiscoveryOptions, RejectedReview, PreparedDiscovery, AnalysisBuildMetadata } from './discovery.js';
 export { applyDocumentationCoverage, redactAnalysis } from './documentation.js';
 export type { DocumentationSource, RedactionOptions } from './documentation.js';
 export { compareAnalysisResults } from './compare.js';
 export type { AnalysisDelta } from './compare.js';
 export { applyHumanDecisions, decisionTemplate } from './decisions.js';
 export type { DecisionApplicationSummary } from './decisions.js';
+export { LocalFeatureEmbeddingProvider, cosineSimilarity, meanEmbedding } from './embeddings.js';
+export type { EmbeddingProvider, LocalFeatureEmbeddingOptions } from './embeddings.js';
+export { semanticClusters, discoverRulesSemantic } from './semantic.js';
+export type { SemanticDiscoveryOptions } from './semantic.js';
