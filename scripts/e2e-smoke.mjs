@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { access, readFile, rm } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const cli = new URL('../apps/cli/dist/index.js', import.meta.url).pathname;
-const fixture = new URL('../fixtures/reviews.json', import.meta.url).pathname;
+const cli = fileURLToPath(new URL('../apps/cli/dist/index.js', import.meta.url));
+const fixture = fileURLToPath(new URL('../fixtures/reviews.json', import.meta.url));
 const out = 'e2e-output';
 
 await rm(out, { recursive: true, force: true });
