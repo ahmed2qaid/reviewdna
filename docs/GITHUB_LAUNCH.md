@@ -56,8 +56,6 @@ The top README is intentionally optimized for this sequence; detailed implementa
 
 ## Launch demo scenario
 
-Recommended public-demo story:
-
 ```text
 A repository has years of review comments.
         ↓
@@ -74,19 +72,26 @@ Approved knowledge becomes agent guidance or a reviewable Knowledge Proposal PR.
 
 For screenshots, capture the generated `_site/index.html` / `demo-output/reviewdna-report.html` after a successful build. Use real generated output rather than a hand-drawn dashboard mockup.
 
-## Release launch checklist
+## v0.2.0 launch status
 
-Before announcing `v0.2.0`:
+Completed:
 
-- CI green on the release head.
-- CodeQL green.
-- Release metadata verified.
-- Immutable release/tag created from the tested commit.
-- README points to the correct stable Action tag.
-- Release notes explain what changed since `v0.1.0`.
-- Public Pages deployment enabled, or README explicitly says the live URL is pending.
-- GHCR image state described accurately; do not claim anonymous pull until package visibility is Public.
-- A real generated dashboard screenshot is added after Pages is enabled.
+- ✅ CI green on the release head.
+- ✅ CodeQL green on the release head.
+- ✅ release metadata verified across root, CLI and all workspace package manifests.
+- ✅ GitHub Release `v0.2.0` created from the tested release commit.
+- ✅ README points to `ahmed2qaid/reviewdna/action@v0.2.0`.
+- ✅ detailed release notes and Changelog explain the changes since `v0.1.0`.
+- ✅ GHCR release image built from the release commit, pushed, pulled back from GHCR, and smoke-tested before the GitHub Release was created.
+- ✅ repository README/showcase, Mermaid architecture, Quick Start, badges, demo scenario, launch copy and portfolio copy are committed.
+
+Administrative launch items still pending:
+
+- ⏳ Enable GitHub Pages once under **Settings → Pages → Build and deployment → Source: GitHub Actions**. The build/artifact workflow already succeeds without this setting.
+- ⏳ If anonymous Docker pulls are desired, change the GHCR `reviewdna` package visibility to **Public**. Authenticated release publication/pull is already verified.
+- ⏳ Set the repository About description and recommended Topics from this file.
+- ⏳ Upload the repository social preview from `docs/assets/reviewdna-showcase.svg` (or an exported PNG of the same artwork).
+- ⏳ After Pages is enabled, capture real generated dashboard screenshots from the deployed synthetic demo and add them to the README. Do not use hand-drawn fake dashboard screenshots.
 
 ## Suggested launch post
 
@@ -113,5 +118,5 @@ Suggested highlights:
 Suggested links:
 
 - GitHub: `https://github.com/ahmed2qaid/reviewdna`
-- Releases: `https://github.com/ahmed2qaid/reviewdna/releases`
+- Release: `https://github.com/ahmed2qaid/reviewdna/releases/tag/v0.2.0`
 - Live demo/docs: `https://ahmed2qaid.github.io/reviewdna/` after Pages activation

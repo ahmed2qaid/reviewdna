@@ -57,7 +57,7 @@ The target is a production-quality v1.0, not a toy demo.
 
 ## 0.6 — GitHub-native workflow
 - ✅ composite GitHub Action with artifact upload and smoke test
-- ✅ stable tagged Action distribution (`v0.1.0`)
+- ✅ stable tagged Action distribution (`v0.2.0`)
 - ✅ local Watch mode with JSON/Markdown deltas
 - ✅ richer lifecycle/scope/documentation delta classification
 - ✅ cached scheduled Watch workflow example for fork-based deployments
@@ -65,7 +65,7 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ tracked human `review` / `ignore` / `promote` / `override` decision file
 - ✅ local evidence-backed Knowledge Proposal review bundle
 - ✅ explicit dry-run-first GitHub publishing of Knowledge Proposals as review Pull Requests
-- GitHub Pages report deployment
+- GitHub Pages report deployment (build/artifact workflow is ready; repository Pages still needs one-time admin enablement)
 - end-to-end Knowledge Proposal PR demo on a public repository
 
 ## 0.7 — Rich dashboard
@@ -83,7 +83,7 @@ The target is a production-quality v1.0, not a toy demo.
 ## 0.8 — Ecosystem
 - ✅ versioned plugin interfaces for collectors/providers/exporters/scorers with registry, validation, docs and executable example
 - ✅ Dockerfile and CI smoke build
-- published Docker image
+- ✅ GHCR release image published and pull/run verified in the v0.2.0 release workflow (anonymous public pull still depends on GitHub Package Visibility)
 - ✅ public JSON Schema package contract and executable programmatic API examples
 - ✅ GitLab collector prototype with plugin adapter, offline tests and self-hosted support
 

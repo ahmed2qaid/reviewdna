@@ -80,12 +80,12 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Smoke-test immutable v0.1.0 Action release
-        uses: ahmed2qaid/reviewdna/action@v0.1.0
+      - name: Smoke-test immutable v0.2.0 Action release
+        uses: ahmed2qaid/reviewdna/action@v0.2.0
         with:
           repository: ${{ github.repository }}
           max-prs: '5'
-          artifact-name: reviewdna-v0.1.0-smoke
+          artifact-name: reviewdna-v0.2.0-smoke
 
   docker:
     runs-on: ubuntu-latest
