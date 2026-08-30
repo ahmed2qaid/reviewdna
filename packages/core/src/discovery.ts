@@ -4,6 +4,9 @@ import { acceptedEvidenceWeight, evidenceDisposition, rejectedEvidenceWeight } f
 import { GENERALIZERS, similarity, tokens } from './text.js';
 
 export interface DiscoveryOptions{minEvidence?:number;includeBots?:boolean;}
+export interface RejectedReview { id:string; body:string; reason:string; }
+export interface PreparedDiscovery { classified:ClassifiedReview[]; candidates:ClassifiedReview[]; rejected:RejectedReview[]; }
+export interface AnalysisBuildMetadata { clusterer?:'deterministic'|'semantic'; embeddingProvider?:string; semanticThreshold?:number; }
 
 function stableHash(input:string):string{
   let hash=2166136261;
@@ -37,12 +40,28 @@ function evidenceOf(r:ClassifiedReview):RuleEvidence{const e:RuleEvidence={id:r.
 function negative(text:string){return /\b(avoid|never|do not|don't|remove|stop|instead of)\b/i.test(text);}
 export function detectConflicts(rules:EngineeringRule[]):void{for(let i=0;i<rules.length;i++)for(let j=i+1;j<rules.length;j++){const a=rules[i],b=rules[j];if(!a||!b||a.category!==b.category)continue;if(negative(a.text)!==negative(b.text)&&similarity(a.text,b.text)>=.22){a.conflictingRuleIds.push(b.id);b.conflictingRuleIds.push(a.id);a.status=b.status='disputed';for(const r of[a,b]){r.scoreBreakdown.conflictPenalty=15;r.scoreBreakdown.total=Math.max(0,r.scoreBreakdown.total-15);r.confidence=r.scoreBreakdown.total;}}}}
 
-export function discoverRules(records:ReviewRecord[],repository:string,source:'github'|'fixture'='github',options:DiscoveryOptions={}):AnalysisResult{
-  const minEvidence=Math.max(1,options.minEvidence??2),classified=records.map(classifyReview),candidates=classified.filter(r=>r.actionable&&r.generalizable&&!r.noise&&!r.oneOff&&(options.includeBots||!r.bot));
-  const rejected=classified.filter(r=>!candidates.includes(r)).map(r=>({id:r.id,body:r.body,reason:r.bot&&!options.includeBots?'bot':r.noise?'noise':r.oneOff?'one-off':!r.actionable?'not-actionable':'not-generalizable'})),clusters:ClassifiedReview[][]=[];
-  for(const review of candidates){const target=clusters.find(c=>c[0]&&c[0].category===review.category&&similarity(c[0].body,review.body)>=.16);if(target)target.push(review);else clusters.push([review]);}
+export function prepareDiscovery(records:ReviewRecord[],options:DiscoveryOptions={}):PreparedDiscovery{
+  const classified=records.map(classifyReview),candidates=classified.filter(r=>r.actionable&&r.generalizable&&!r.noise&&!r.oneOff&&(options.includeBots||!r.bot));
+  const candidateIds=new Set(candidates.map(r=>r.id));
+  const rejected=classified.filter(r=>!candidateIds.has(r.id)).map(r=>({id:r.id,body:r.body,reason:r.bot&&!options.includeBots?'bot':r.noise?'noise':r.oneOff?'one-off':!r.actionable?'not-actionable':'not-generalizable'}));
+  return{classified,candidates,rejected};
+}
+
+export function buildAnalysisFromClusters(records:ReviewRecord[],repository:string,source:'github'|'fixture',clusters:ClassifiedReview[][],initialRejected:RejectedReview[],options:DiscoveryOptions={},metadata:AnalysisBuildMetadata={}):AnalysisResult{
+  const minEvidence=Math.max(1,options.minEvidence??2),rejected=[...initialRejected];
   const retained=clusters.filter(c=>{if(c.length>=minEvidence)return true;for(const r of c)rejected.push({id:r.id,body:r.body,reason:'insufficient-evidence'});return false;});
   const rules=retained.map((cluster,index)=>{const sorted=[...cluster].sort((a,b)=>a.createdAt.localeCompare(b.createdAt)),score=scoreCluster(cluster),firstSeen=sorted[0]?.createdAt??new Date().toISOString(),lastSeen=sorted.at(-1)?.createdAt??firstSeen;return {id:`RULE-${String(index+1).padStart(4,'0')}`,fingerprint:fingerprintOf(cluster),text:imperativeRule([...cluster].sort((a,b)=>b.body.length-a.body.length)[0]?.body??''),category:cluster[0]?.category??'general',status:statusFrom(score.total,lastSeen,firstSeen),confidence:score.total,evidenceCount:cluster.length,reviewerCount:new Set(cluster.map(r=>r.reviewer)).size,firstSeen,lastSeen,scope:scopeOf(cluster),documented:false,documentedBy:[],documentationConflicts:[],conflictingRuleIds:[],evidence:sorted.map(evidenceOf),scoreBreakdown:score} satisfies EngineeringRule;}).sort((a,b)=>b.confidence-a.confidence);
   detectConflicts(rules);const prs=new Set(records.map(r=>r.prNumber)),reviewers=new Set(records.map(r=>r.reviewer)),categoryCounts:Record<string,number>={};for(const r of rules)categoryCounts[r.category]=(categoryCounts[r.category]??0)+1;
-  return {schemaVersion:'1.0',summary:{repository,generatedAt:new Date().toISOString(),reviewsAnalyzed:records.length,pullRequests:prs.size,reviewers:reviewers.size,rules:rules.length,highConfidenceRules:rules.filter(r=>r.confidence>=80).length,emergingRules:rules.filter(r=>r.status==='emerging').length,conflictingRules:rules.filter(r=>r.conflictingRuleIds.length).length,staleRules:rules.filter(r=>r.status==='stale').length,undocumentedRules:rules.filter(r=>!r.documented).length,documentationCoverage:0,documentationDrift:0,categoryCounts},rules,rejected,metadata:{engineVersion:'0.1.0',mode:'deterministic',source}};
+  return {schemaVersion:'1.0',summary:{repository,generatedAt:new Date().toISOString(),reviewsAnalyzed:records.length,pullRequests:prs.size,reviewers:reviewers.size,rules:rules.length,highConfidenceRules:rules.filter(r=>r.confidence>=80).length,emergingRules:rules.filter(r=>r.status==='emerging').length,conflictingRules:rules.filter(r=>r.conflictingRuleIds.length).length,staleRules:rules.filter(r=>r.status==='stale').length,undocumentedRules:rules.filter(r=>!r.documented).length,documentationCoverage:0,documentationDrift:0,categoryCounts},rules,rejected,metadata:{engineVersion:'0.2.0-dev',mode:'deterministic',source,clusterer:metadata.clusterer??'deterministic',...(metadata.embeddingProvider?{embeddingProvider:metadata.embeddingProvider}:{}),...(metadata.semanticThreshold!==undefined?{semanticThreshold:metadata.semanticThreshold}:{})}};
+}
+
+export function deterministicClusters(candidates:ClassifiedReview[]):ClassifiedReview[][]{
+  const clusters:ClassifiedReview[][]=[];
+  for(const review of candidates){const target=clusters.find(c=>c[0]&&c[0].category===review.category&&similarity(c[0].body,review.body)>=.16);if(target)target.push(review);else clusters.push([review]);}
+  return clusters;
+}
+
+export function discoverRules(records:ReviewRecord[],repository:string,source:'github'|'fixture'='github',options:DiscoveryOptions={}):AnalysisResult{
+  const prepared=prepareDiscovery(records,options);
+  return buildAnalysisFromClusters(records,repository,source,deterministicClusters(prepared.candidates),prepared.rejected,options,{clusterer:'deterministic'});
 }
