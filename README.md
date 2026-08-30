@@ -37,9 +37,13 @@ The target repository is never modified and generated policy requires human revi
 
 ## Public demo
 
-A reproducible synthetic demo is built from `fixtures/reviews.json` by the real ReviewDNA engine and deployed through GitHub Pages:
+A reproducible synthetic demo is built from `fixtures/reviews.json` by the real ReviewDNA engine and is ready for GitHub Pages deployment.
+
+Expected Pages URL after the repository's one-time Pages enablement:
 
 **https://ahmed2qaid.github.io/reviewdna/**
+
+Until Pages is enabled in **Settings → Pages → Build and deployment → Source: GitHub Actions**, the `ReviewDNA Public Demo` workflow still builds successfully and uploads the complete `_site/` as a workflow artifact instead of failing.
 
 The demo is explicitly labeled **Synthetic fixture / Synthetic demo**. It does not claim to represent a real repository, team, or maintainer policy.
 
@@ -194,7 +198,7 @@ Remote refinement sends selected review evidence to the configured endpoint and 
 
 ## Quality gates
 
-The repository includes fixture-driven tests plus labeled synthetic classification/semantic regression benchmarks. These benchmarks are regression guards, **not claims of real-world accuracy**. CI exercises Node.js 20/22/24, benchmark generation, the complete reproducible Pages demo site, Docker, the composite GitHub Action, incremental-cache behavior, deep-evidence collection, human-decision behavior, redaction, cost/checkpoint behavior, and knowledge-proposal provenance.
+The repository includes fixture-driven tests plus labeled synthetic classification/semantic regression benchmarks. These benchmarks are regression guards, **not claims of real-world accuracy**. CI exercises Node.js 20/22/24, benchmark generation, the complete reproducible Pages demo site, release-metadata verification, Docker, the composite GitHub Action, incremental-cache behavior, deep-evidence collection, human-decision behavior, redaction, cost/checkpoint behavior, and knowledge-proposal provenance.
 
 ## Local-first by design
 
@@ -221,10 +225,12 @@ No ReviewDNA account or telemetry is required. Tokens are not serialized into re
 
 ## GitHub Action
 
+The first immutable pre-v1 Action release is `v0.1.0`.
+
 One-time analysis:
 
 ```yaml
-- uses: ahmed2qaid/reviewdna/action@main
+- uses: ahmed2qaid/reviewdna/action@v0.1.0
   with:
     repository: owner/repo
     max-prs: '100'
@@ -235,7 +241,7 @@ One-time analysis:
 Continuous watch:
 
 ```yaml
-- uses: ahmed2qaid/reviewdna/action@main
+- uses: ahmed2qaid/reviewdna/action@v0.1.0
   with:
     repository: owner/repo
     mode: watch
@@ -244,7 +250,7 @@ Continuous watch:
     resume: 'true'
 ```
 
-Pin a commit SHA in security-sensitive workflows until stable version tags exist.
+`@main` follows development and is intentionally not a stable reference. For the strongest supply-chain pinning in security-sensitive workflows, use the exact commit SHA behind the release tag.
 
 ## Docker
 
@@ -255,7 +261,7 @@ docker run --rm -e GITHUB_TOKEN reviewdna analyze owner/repo --max-prs 100
 
 ## Roadmap
 
-Next release-focused work: production version tags for the Action, npm/package publishing, the public Pages demo deployment, an end-to-end Knowledge Proposal PR demo, real-world benchmark calibration, cross-platform E2E, and release/launch assets.
+Next release-focused work: npm/package publishing, activating the prepared public Pages deployment, an end-to-end Knowledge Proposal PR demo, real-world benchmark calibration, cross-platform E2E, and release/launch assets.
 
 ## Contributing
 
