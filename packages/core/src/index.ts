@@ -11,3 +11,5 @@ export { LocalFeatureEmbeddingProvider, cosineSimilarity, meanEmbedding } from '
 export type { EmbeddingProvider, LocalFeatureEmbeddingOptions } from './embeddings.js';
 export { semanticClusters, discoverRulesSemantic } from './semantic.js';
 export type { SemanticDiscoveryOptions } from './semantic.js';
+export { applyRuleEvolution } from './evolution.js';
+export type { RuleEvolutionSummary } from './evolution.js';
