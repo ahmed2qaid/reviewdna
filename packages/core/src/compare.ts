@@ -16,6 +16,7 @@ function sameStrings(a:string[],b:string[]):boolean {
 }
 function relationshipStrings(rule:EngineeringRule,key:'childFingerprints'|'supersedesFingerprints'):string[]{return rule.relationships?.[key]??[];}
 function timelineSignature(rule:EngineeringRule):string[]{return (rule.timeline??[]).map(event=>`${event.at}|${event.type}|${event.relatedFingerprint??''}|${event.evidenceId??''}`);}
+function documentationSignature(rule:EngineeringRule):string[]{return (rule.documentationEvidence??[]).map(match=>`${match.path}|${match.kind}|${match.matcher}|${match.score.toFixed(3)}`).sort();}
 
 export function compareAnalysisResults(before:AnalysisResult,after:AnalysisResult):AnalysisDelta {
   const used=new Set<string>(),pairs:RulePair[]=[];
@@ -51,6 +52,7 @@ export function compareAnalysisResults(before:AnalysisResult,after:AnalysisResul
     if(p.before.documented!==p.after.documented)changes.push(p.after.documented?'documented':'undocumented');
     if(!sameStrings(p.before.documentedBy,p.after.documentedBy))changes.push('document-sources');
     if(!sameStrings(p.before.documentationConflicts,p.after.documentationConflicts))changes.push('documentation-drift');
+    if(!sameStrings(documentationSignature(p.before),documentationSignature(p.after)))changes.push('documentation-evidence');
     return {...p,changes};
   }).filter(p=>p.changes.length>0);
   return {
