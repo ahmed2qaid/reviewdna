@@ -14,6 +14,7 @@
     "typecheck": "tsc -b --pretty false",
     "demo": "npm run build && node apps/cli/dist/index.js analyze-fixture fixtures/reviews.json --out demo-output",
     "demo:site": "npm run demo && node scripts/build-pages-demo.mjs",
+    "example:programmatic": "npm run build && node examples/programmatic-analysis.mjs",
     "benchmark": "npm run build && node scripts/benchmark.mjs && node scripts/semantic-benchmark.mjs",
     "benchmark:semantic": "npm run build && node scripts/semantic-benchmark.mjs",
     "release:verify": "node scripts/verify-release.mjs"

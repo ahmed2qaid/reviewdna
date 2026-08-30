@@ -84,7 +84,7 @@ The target is a production-quality v1.0, not a toy demo.
 - plugin interfaces for collectors/providers/exporters/scorers
 - ✅ Dockerfile and CI smoke build
 - published Docker image
-- public JSON schema package and programmatic API examples
+- ✅ public JSON Schema package contract and executable programmatic API examples
 - GitLab collector prototype
 
 ## 0.9 — Hardening

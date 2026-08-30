@@ -69,6 +69,20 @@ GITHUB_TOKEN=github_pat_xxx node apps/cli/dist/index.js analyze owner/repo --max
 
 With a GitHub token, ReviewDNA also attempts to read resolved review-thread state. By default, bot guidance is excluded and at least two pieces of review evidence are required before a convention is promoted.
 
+## Programmatic API and JSON Schema
+
+ReviewDNA's workspace packages can also be consumed directly without invoking the CLI. The repository now exposes a Draft 2020-12 [`AnalysisResult` JSON Schema](packages/schema/analysis-result.schema.json) through the `@reviewdna/schema/analysis-result.schema.json` package subpath, alongside the TypeScript contracts in `@reviewdna/schema`.
+
+Run the executable API example:
+
+```bash
+npm run example:programmatic
+```
+
+It calls `@reviewdna/core` directly, derives structured insights, and uses `@reviewdna/report` to write `example-output/reviewdna.json`, an HTML dashboard, and an SVG share card. CI executes this example on Node.js 20, 22, and 24 and validates current engine output against the public JSON Schema contract.
+
+These packages are workspace contracts today; npm publication is still intentionally pending. See [`docs/PROGRAMMATIC_API.md`](docs/PROGRAMMATIC_API.md) for TypeScript imports, JSON Schema usage, and integration guidance.
+
 ## Incremental analysis and Watch
 
 ReviewDNA keeps a gitignored `.reviewdna/` collection cache keyed by each Pull Request's GitHub `updated_at`. Later runs fetch only new or changed PRs. Use `--no-cache` or `--refresh-cache` when needed. Redaction disables raw-review caching automatically.
@@ -198,7 +212,7 @@ Remote refinement sends selected review evidence to the configured endpoint and 
 
 ## Quality gates
 
-The repository includes fixture-driven tests plus labeled synthetic classification/semantic regression benchmarks. These benchmarks are regression guards, **not claims of real-world accuracy**. CI exercises Node.js 20/22/24, benchmark generation, the complete reproducible Pages demo site, release-metadata verification, Docker, the composite GitHub Action, incremental-cache behavior, deep-evidence collection, human-decision behavior, redaction, cost/checkpoint behavior, and knowledge-proposal provenance.
+The repository includes fixture-driven tests plus labeled synthetic classification/semantic regression benchmarks. These benchmarks are regression guards, **not claims of real-world accuracy**. CI exercises Node.js 20/22/24, benchmark generation, the complete reproducible Pages demo site, the executable programmatic API example and JSON Schema contract, release-metadata verification, Docker, the local and immutable released GitHub Actions, incremental-cache behavior, deep-evidence collection, human-decision behavior, redaction, cost/checkpoint behavior, and knowledge-proposal provenance.
 
 ## Local-first by design
 
