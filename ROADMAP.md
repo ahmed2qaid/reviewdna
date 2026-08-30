@@ -85,7 +85,7 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ Dockerfile and CI smoke build
 - published Docker image
 - ✅ public JSON Schema package contract and executable programmatic API examples
-- GitLab collector prototype
+- ✅ GitLab collector prototype with plugin adapter, offline tests and self-hosted support
 
 ## 0.9 — Hardening
 - large-repository benchmarks
