@@ -13,6 +13,7 @@
     "test": "node --test tests/*.test.mjs",
     "typecheck": "tsc -b --pretty false",
     "demo": "npm run build && node apps/cli/dist/index.js analyze-fixture fixtures/reviews.json --out demo-output",
+    "demo:site": "npm run demo && node scripts/build-pages-demo.mjs",
     "benchmark": "npm run build && node scripts/benchmark.mjs && node scripts/semantic-benchmark.mjs",
     "benchmark:semantic": "npm run build && node scripts/semantic-benchmark.mjs"
   },
