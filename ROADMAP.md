@@ -23,11 +23,15 @@ The target is a production-quality v1.0, not a toy demo.
 
 ## 0.3 — Semantic intelligence
 - ✅ optional Ollama and OpenAI-compatible wording refinement with grounding safeguards
-- embeddings abstraction
-- local embedding provider
-- semantic clustering beyond token overlap
+- ✅ provider-neutral embedding abstraction
+- ✅ deterministic local feature embedding provider
+- ✅ Ollama and OpenAI-compatible embedding providers
+- ✅ guarded semantic clustering beyond token overlap
+- ✅ separate embedding-provider and wording-provider CLI controls
+- ✅ semantic regression benchmark and auditable clusterer metadata
 - parent/sub-rule relationships
 - superseded-rule detection and rule evolution timeline
+- real-world semantic-clustering threshold calibration
 
 ## 0.4 — Documentation drift
 - ✅ common AGENTS/CLAUDE/CONTRIBUTING/Copilot/Cursor scanning
