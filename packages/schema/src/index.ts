@@ -163,5 +163,8 @@ export interface AnalysisResult {
     redacted?: boolean | undefined;
     provider?: string | undefined;
     refinedRules?: number | undefined;
+    clusterer?: 'deterministic' | 'semantic' | undefined;
+    embeddingProvider?: string | undefined;
+    semanticThreshold?: number | undefined;
   };
 }

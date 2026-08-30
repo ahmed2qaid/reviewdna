@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { applyDocumentationCoverage, applyHumanDecisions, compareAnalysisResults, decisionTemplate, discoverRules, redactAnalysis } from '@reviewdna/core';
+import { applyDocumentationCoverage, applyHumanDecisions, compareAnalysisResults, decisionTemplate, discoverRules, discoverRulesSemantic, LocalFeatureEmbeddingProvider, redactAnalysis, type EmbeddingProvider } from '@reviewdna/core';
 import { GitHubCollector } from '@reviewdna/github';
 import type { GitHubCollectionState } from '@reviewdna/github';
 import { GitHubProposalPublisher, KNOWLEDGE_PROPOSAL_FILES, type KnowledgeProposalFile } from '@reviewdna/github/publisher';
 import { buildKnowledgeProposalManifest, exportAgents, exportClaude, exportContributing, exportCursor, exportKnowledgeProposal, exportMarkdown, exportDeltaMarkdown } from '@reviewdna/exporters';
-import { OllamaProvider, OpenAICompatibleProvider, refineAnalysis } from '@reviewdna/providers';
+import { OllamaEmbeddingProvider, OllamaProvider, OpenAICompatibleEmbeddingProvider, OpenAICompatibleProvider, refineAnalysis } from '@reviewdna/providers';
 import type { ReviewDNAProvider } from '@reviewdna/providers';
 import { renderHtml } from '@reviewdna/report';
 import type { AnalysisResult, DecisionsFile, ReviewRecord } from '@reviewdna/schema';
@@ -16,7 +16,7 @@ const flag = (args:string[], name:string, fallback?:string) => { const i=args.in
 const has = (args:string[], name:string) => args.includes(name);
 
 function help() {
-  console.log(`ReviewDNA ${VERSION}\n\nYour reviews already contain your engineering DNA.\n\nCommands:\n  reviewdna analyze owner/repo [--max-prs 100] [--min-evidence 2] [--out reviewdna-output] [--issue-comments] [--include-bots] [--redact] [--redact-evidence] [--no-cache] [--cache-dir .reviewdna] [--provider deterministic|ollama|openai-compatible] [--deep-evidence] [--decisions reviewdna.decisions.json]\n  reviewdna analyze-fixture file.json [--min-evidence 2] [--out reviewdna-output] [--provider ...]\n  reviewdna export result.json --format agents|claude|cursor|contributing|markdown\n  reviewdna compare before.json after.json\n  reviewdna decisions-template result.json [--out reviewdna.decisions.json]\n  reviewdna proposal result.json [--out reviewdna-proposal]\n  reviewdna publish-proposal owner/repo reviewdna-proposal [--branch reviewdna/proposal-id] [--base main] [--apply]\n  reviewdna watch owner/repo [analyze options] [--out reviewdna-watch] [--baseline-file path] [--fail-on-changes]\n  reviewdna doctor\n  reviewdna --version\n\nAI refinement options (explicit opt-in):\n  --provider ollama --model qwen3:8b [--provider-url http://127.0.0.1:11434]\n  --provider openai-compatible --model MODEL [--provider-url URL]\n  --max-refine-rules N\n  --provider-continue-on-error\n\nProposal publishing is dry-run by default. Add --apply for an explicit GitHub write.\n\nEnvironment:\n  GITHUB_TOKEN\n  REVIEWDNA_LLM_BASE_URL\n  REVIEWDNA_LLM_API_KEY\n  REVIEWDNA_LLM_MODEL\n`);
+  console.log(`ReviewDNA ${VERSION}\n\nYour reviews already contain your engineering DNA.\n\nCommands:\n  reviewdna analyze owner/repo [--max-prs 100] [--min-evidence 2] [--out reviewdna-output] [--clusterer deterministic|semantic] [--embedding-provider local|ollama|openai-compatible] [--semantic-threshold N] [--issue-comments] [--include-bots] [--redact] [--redact-evidence] [--no-cache] [--cache-dir .reviewdna] [--provider deterministic|ollama|openai-compatible] [--deep-evidence] [--decisions reviewdna.decisions.json]\n  reviewdna analyze-fixture file.json [--min-evidence 2] [--out reviewdna-output] [--clusterer deterministic|semantic] [--embedding-provider ...] [--provider ...]\n  reviewdna export result.json --format agents|claude|cursor|contributing|markdown\n  reviewdna compare before.json after.json\n  reviewdna decisions-template result.json [--out reviewdna.decisions.json]\n  reviewdna proposal result.json [--out reviewdna-proposal]\n  reviewdna publish-proposal owner/repo reviewdna-proposal [--branch reviewdna/proposal-id] [--base main] [--apply]\n  reviewdna watch owner/repo [analyze options] [--out reviewdna-watch] [--baseline-file path] [--fail-on-changes]\n  reviewdna doctor\n  reviewdna --version\n\nSemantic clustering options:\n  --clusterer semantic --embedding-provider local\n  --clusterer semantic --embedding-provider ollama [--embedding-model nomic-embed-text] [--embedding-url http://127.0.0.1:11434]\n  --clusterer semantic --embedding-provider openai-compatible --embedding-model MODEL --embedding-url URL\n  --semantic-threshold N\n\nAI wording refinement options (separate, explicit opt-in):\n  --provider ollama --model qwen3:8b [--provider-url http://127.0.0.1:11434]\n  --provider openai-compatible --model MODEL [--provider-url URL]\n  --max-refine-rules N\n  --provider-continue-on-error\n\nProposal publishing is dry-run by default. Add --apply for an explicit GitHub write.\n\nEnvironment:\n  GITHUB_TOKEN\n  REVIEWDNA_EMBEDDING_BASE_URL\n  REVIEWDNA_EMBEDDING_API_KEY\n  REVIEWDNA_EMBEDDING_MODEL\n  REVIEWDNA_LLM_BASE_URL\n  REVIEWDNA_LLM_API_KEY\n  REVIEWDNA_LLM_MODEL\n`);
 }
 
 async function loadCache(path:string):Promise<GitHubCollectionState|undefined> { try { return JSON.parse(await readFile(path,'utf8')) as GitHubCollectionState; } catch { return undefined; } }
@@ -43,12 +43,43 @@ function providerFromArgs(args:string[]):ReviewDNAProvider|undefined {
   throw new Error(`Unknown provider: ${kind}. Use deterministic, ollama, or openai-compatible.`);
 }
 
+function embeddingProviderFromArgs(args:string[]):EmbeddingProvider|undefined {
+  const clusterer=flag(args,'--clusterer','deterministic')!;
+  if(clusterer==='deterministic')return undefined;
+  if(clusterer!=='semantic')throw new Error(`Unknown clusterer: ${clusterer}. Use deterministic or semantic.`);
+  const kind=flag(args,'--embedding-provider','local')!;
+  if(kind==='local')return new LocalFeatureEmbeddingProvider();
+  if(kind==='ollama'){
+    const model=flag(args,'--embedding-model',process.env.REVIEWDNA_EMBEDDING_MODEL||'nomic-embed-text')!;
+    const baseUrl=flag(args,'--embedding-url',process.env.REVIEWDNA_EMBEDDING_BASE_URL||'http://127.0.0.1:11434')!;
+    return new OllamaEmbeddingProvider(model,baseUrl);
+  }
+  if(kind==='openai-compatible'){
+    const model=flag(args,'--embedding-model',process.env.REVIEWDNA_EMBEDDING_MODEL);
+    const baseUrl=flag(args,'--embedding-url',process.env.REVIEWDNA_EMBEDDING_BASE_URL);
+    const apiKey=process.env.REVIEWDNA_EMBEDDING_API_KEY;
+    if(!model||!baseUrl||!apiKey)throw new Error('openai-compatible embeddings require --embedding-model (or REVIEWDNA_EMBEDDING_MODEL), --embedding-url (or REVIEWDNA_EMBEDDING_BASE_URL), and REVIEWDNA_EMBEDDING_API_KEY.');
+    return new OpenAICompatibleEmbeddingProvider({model,baseUrl,apiKey});
+  }
+  throw new Error(`Unknown embedding provider: ${kind}. Use local, ollama, or openai-compatible.`);
+}
+
+async function discoverFromArgs(records:ReviewRecord[],repository:string,source:'github'|'fixture',args:string[],minEvidence:number):Promise<AnalysisResult>{
+  const provider=embeddingProviderFromArgs(args),includeBots=has(args,'--include-bots');
+  if(!provider)return discoverRules(records,repository,source,{minEvidence,includeBots});
+  const rawThreshold=flag(args,'--semantic-threshold'),threshold=rawThreshold===undefined?undefined:Number(rawThreshold);
+  if(threshold!==undefined&&(!Number.isFinite(threshold)||threshold<=0||threshold>1))throw new Error('--semantic-threshold must be > 0 and <= 1.');
+  if(provider.name.startsWith('openai-compatible:'))process.stderr.write('ReviewDNA: remote embedding provider enabled; classified review text will be sent to the configured endpoint for vectorization.\n');
+  process.stderr.write(`ReviewDNA: semantic clustering with ${provider.name}${threshold!==undefined?` at threshold ${threshold}`:''}. Embeddings can group evidence but cannot create rules.\n`);
+  return discoverRulesSemantic(records,repository,source,provider,{minEvidence,includeBots,...(threshold!==undefined?{threshold}:{})});
+}
+
 async function maybeRefine(result:AnalysisResult,args:string[]):Promise<AnalysisResult> {
   const provider=providerFromArgs(args);
   if(!provider) return result;
   const maxRules=Number(flag(args,'--max-refine-rules',String(result.rules.length)));
   if(!Number.isFinite(maxRules)||maxRules<0) throw new Error('--max-refine-rules must be a non-negative number.');
-  if(provider.name==='openai-compatible') process.stderr.write('ReviewDNA: remote provider enabled; selected review evidence will be sent to the configured endpoint.\n');
+  if(provider.name==='openai-compatible') process.stderr.write('ReviewDNA: remote wording provider enabled; selected review evidence will be sent to the configured endpoint.\n');
   process.stderr.write(`ReviewDNA: refining up to ${Math.min(maxRules,result.rules.length)} rules with ${provider.name}.\n`);
   return refineAnalysis(result,provider,{maxRules,continueOnError:has(args,'--provider-continue-on-error'),onProgress:(current,total)=>process.stderr.write(`\rRefining rules ${current}/${total}`)}).finally(()=>process.stderr.write('\n'));
 }
@@ -82,7 +113,7 @@ async function save(result:AnalysisResult,outDir:string) {
 }
 
 function summary(r:AnalysisResult) {
-  console.log(`\nReviewDNA 🧬\n\nRepository: ${r.summary.repository}\nReviews analyzed: ${r.summary.reviewsAnalyzed}\nPull requests: ${r.summary.pullRequests}\nReviewers: ${r.summary.reviewers}\nRules discovered: ${r.summary.rules}\nHigh-confidence: ${r.summary.highConfidenceRules}\nConflicting: ${r.summary.conflictingRules}\nStale: ${r.summary.staleRules}\nDocumentation coverage: ${r.summary.documentationCoverage}%\nDocumentation drift: ${r.summary.documentationDrift}\nMode: ${r.metadata.mode}${r.metadata.provider?` (${r.metadata.provider})`:''}\n`);
+  console.log(`\nReviewDNA 🧬\n\nRepository: ${r.summary.repository}\nReviews analyzed: ${r.summary.reviewsAnalyzed}\nPull requests: ${r.summary.pullRequests}\nReviewers: ${r.summary.reviewers}\nRules discovered: ${r.summary.rules}\nHigh-confidence: ${r.summary.highConfidenceRules}\nConflicting: ${r.summary.conflictingRules}\nStale: ${r.summary.staleRules}\nDocumentation coverage: ${r.summary.documentationCoverage}%\nDocumentation drift: ${r.summary.documentationDrift}\nClusterer: ${r.metadata.clusterer??'deterministic'}${r.metadata.embeddingProvider?` (${r.metadata.embeddingProvider}${r.metadata.semanticThreshold!==undefined?`, threshold ${r.metadata.semanticThreshold}`:''})`:''}\nMode: ${r.metadata.mode}${r.metadata.provider?` (${r.metadata.provider})`:''}\n`);
 }
 
 async function analyzeRepository(repo:string,args:string[]):Promise<{result:AnalysisResult;out:string}> {
@@ -95,7 +126,7 @@ async function analyzeRepository(repo:string,args:string[]):Promise<{result:Anal
   const docs=await collector.collectDocumentation(repo);
   if(cacheEnabled) await persistCache(cachePath,collection.state); else if(redacting) process.stderr.write('ReviewDNA: raw-review cache disabled because redaction is active.\n');
   console.log(`Collection: ${collection.stats.fetchedPullRequests} fetched PRs, ${collection.stats.cachedPullRequests} reused from local cache, ${collection.stats.deepComparisons} deep evidence comparisons.`);
-  let result=discoverRules(collection.records,repo,'github',{minEvidence,includeBots:has(args,'--include-bots')});
+  let result=await discoverFromArgs(collection.records,repo,'github',args,minEvidence);
   result=applyDocumentationCoverage(result,docs);
   result=await maybeRefine(result,args);
   result=await maybeApplyDecisions(result,args);
@@ -108,9 +139,9 @@ async function main() {
   const args=process.argv.slice(2), cmd=args[0];
   if(!cmd||has(args,'--help')||cmd==='help'){help();return;}
   if(has(args,'--version')||cmd==='--version'){console.log(VERSION);return;}
-  if(cmd==='doctor'){console.log(`ReviewDNA doctor\nNode: ${process.version} ✓\nGitHub token: ${process.env.GITHUB_TOKEN?'present ✓':'not set (public anonymous mode)'}\nRuntime fetch: ${typeof fetch==='function'?'available ✓':'missing ✗'}\nOllama URL: ${process.env.REVIEWDNA_LLM_BASE_URL||'not configured'}\nRemote LLM key: ${process.env.REVIEWDNA_LLM_API_KEY?'present':'not configured'}\n`);return;}
+  if(cmd==='doctor'){console.log(`ReviewDNA doctor\nNode: ${process.version} ✓\nGitHub token: ${process.env.GITHUB_TOKEN?'present ✓':'not set (public anonymous mode)'}\nRuntime fetch: ${typeof fetch==='function'?'available ✓':'missing ✗'}\nOllama URL: ${process.env.REVIEWDNA_LLM_BASE_URL||process.env.REVIEWDNA_EMBEDDING_BASE_URL||'not configured'}\nRemote LLM key: ${process.env.REVIEWDNA_LLM_API_KEY?'present':'not configured'}\nRemote embedding key: ${process.env.REVIEWDNA_EMBEDDING_API_KEY?'present':'not configured'}\n`);return;}
   if(cmd==='analyze'){const repo=args[1];if(!repo)throw new Error('Missing repository. Example: reviewdna analyze owner/repo');const {result,out}=await analyzeRepository(repo,args);summary(result);console.log(`Output: ${resolve(out)}\nOpen reviewdna-report.html in your browser.`);return;}
-  if(cmd==='analyze-fixture'){const file=args[1];if(!file)throw new Error('Missing fixture JSON path.');const out=flag(args,'--out','reviewdna-output')!,minEvidence=Number(flag(args,'--min-evidence','2')),records=JSON.parse(await readFile(file,'utf8')) as ReviewRecord[],repo=records[0]?.repo??'fixture/repository';let result=discoverRules(records,repo,'fixture',{minEvidence,includeBots:has(args,'--include-bots')});result=await maybeRefine(result,args);result=await maybeApplyDecisions(result,args);if(has(args,'--redact')||has(args,'--redact-evidence'))result=redactAnalysis(result,{reviewers:true,paths:true,evidenceBodies:has(args,'--redact-evidence')});await save(result,out);summary(result);return;}
+  if(cmd==='analyze-fixture'){const file=args[1];if(!file)throw new Error('Missing fixture JSON path.');const out=flag(args,'--out','reviewdna-output')!,minEvidence=Number(flag(args,'--min-evidence','2')),records=JSON.parse(await readFile(file,'utf8')) as ReviewRecord[],repo=records[0]?.repo??'fixture/repository';let result=await discoverFromArgs(records,repo,'fixture',args,minEvidence);result=await maybeRefine(result,args);result=await maybeApplyDecisions(result,args);if(has(args,'--redact')||has(args,'--redact-evidence'))result=redactAnalysis(result,{reviewers:true,paths:true,evidenceBodies:has(args,'--redact-evidence')});await save(result,out);summary(result);return;}
   if(cmd==='watch'){
     const repo=args[1];if(!repo)throw new Error('Missing repository. Example: reviewdna watch owner/repo');
     const out=flag(args,'--out','reviewdna-watch')!,baselineFile=flag(args,'--baseline-file',resolve(out,'reviewdna.json'))!;

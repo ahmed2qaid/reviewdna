@@ -101,3 +101,5 @@ export class OllamaProvider implements ReviewDNAProvider {
     } finally { clearTimeout(timer); }
   }
 }
+
+export { OllamaEmbeddingProvider, OpenAICompatibleEmbeddingProvider } from './embeddings.js';
