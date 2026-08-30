@@ -23,4 +23,9 @@ jobs:
           mode: watch
           max-prs: '500'
           min-evidence: '3'
+          use-cache: 'true'
+          deep-evidence: 'true'
+          clusterer: deterministic
+          semantic-docs: 'true'
+          embedding-provider: local
           artifact-name: reviewdna-weekly
