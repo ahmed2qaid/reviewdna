@@ -31,7 +31,25 @@ An analysis creates:
 - `cursor.suggested.mdc` — Cursor suggestions.
 - `CONTRIBUTING.suggested.md` — recurring undocumented conventions worth reviewing for contributor docs.
 
+The dashboard also exposes Review Hotspots, conservative Automation Opportunities, documentation provenance, rule evolution timelines, and a locally generated 1200×630 SVG share card.
+
 The target repository is never modified and generated policy requires human review.
+
+## Public demo
+
+A reproducible synthetic demo is built from `fixtures/reviews.json` by the real ReviewDNA engine and deployed through GitHub Pages:
+
+**https://ahmed2qaid.github.io/reviewdna/**
+
+The demo is explicitly labeled **Synthetic fixture / Synthetic demo**. It does not claim to represent a real repository, team, or maintainer policy.
+
+Build the exact Pages artifact locally:
+
+```bash
+npm run demo:site
+```
+
+This creates `_site/index.html`, `share-card.svg`, `reviewdna.json`, and `engineering-dna.md`. See [`docs/PUBLIC_DEMO.md`](docs/PUBLIC_DEMO.md).
 
 ## Quick start
 
@@ -60,6 +78,8 @@ The first Watch run creates a baseline. Later runs generate `reviewdna-delta.jso
 
 The composite GitHub Action supports `mode: watch` and restores `.reviewdna` with `actions/cache`, so unchanged Pull Request history is reused across scheduled runs. A fork-ready scheduled example is included in [`examples/reviewdna-watch.yml`](examples/reviewdna-watch.yml).
 
+For large or remote-provider analyses, ReviewDNA also supports validated pipeline checkpoints (`--resume`), user-priced token/cost preflight, a remote-cost ceiling, and targeted sensitive-data redaction. See [`docs/PIPELINE_HARDENING.md`](docs/PIPELINE_HARDENING.md).
+
 ## Evidence, not vibes
 
 ReviewDNA does not equate “thread resolved” with “guidance accepted.” Evidence is deliberately weighted:
@@ -72,7 +92,7 @@ The deep signal is still a conservative correlation, not proof that the review c
 
 Every rule retains source links, evidence count, reviewer diversity, first/last seen dates, inferred scope, recency, persistence, conflict state, documentation state, a stable-ish fingerprint, and an explainable confidence breakdown.
 
-ReviewDNA also checks common repository instructions (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, Copilot instructions and Cursor rules), reports documentation coverage, and flags baseline opposite-guidance drift.
+ReviewDNA also checks common repository instructions (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, Copilot instructions and Cursor rules), reports documentation coverage, and can add optional semantic documentation support/conflict matching with auditable lexical/semantic provenance.
 
 ## Human decisions
 
@@ -127,13 +147,35 @@ The bundle contains:
 
 The proposal uses the same policy-selection rules as the agent exports: ignored rules are excluded, promoted/overridden rules are included, and automatically selected rules must pass the confidence/lifecycle/conflict gates. It preserves source evidence URLs so reviewers can verify why each convention exists.
 
-**`proposal` does not modify the target repository and does not open a Pull Request.** It deliberately creates a reviewable package first. An optional GitHub PR publishing workflow is a later layer and will remain explicit rather than silently changing policy files.
+**`proposal` does not modify the target repository and does not open a Pull Request.** It deliberately creates a reviewable package first.
 
-## Optional AI refinement
+Publishing that already-reviewed bundle is a separate, explicit step and is a true dry-run unless `--apply` is supplied:
 
-Deterministic mining remains the default. AI refinement is an explicit second stage that may rewrite the wording of already-discovered rules; it cannot create rules or change evidence/confidence.
+```bash
+node apps/cli/dist/index.js publish-proposal owner/repo reviewdna-proposal \
+  --branch reviewdna/proposal-example
 
-Local Ollama:
+# Explicit write only after reviewing the dry run:
+node apps/cli/dist/index.js publish-proposal owner/repo reviewdna-proposal \
+  --branch reviewdna/proposal-example \
+  --apply
+```
+
+The publisher writes only under `.reviewdna/proposals/<id>/` on a `reviewdna/*` branch and opens a review Pull Request. It never silently overwrites `AGENTS.md`, `CONTRIBUTING.md`, or another repository policy file.
+
+## Optional semantic intelligence and AI refinement
+
+Deterministic mining remains the default. Semantic clustering is an optional evidence-grouping stage; AI wording refinement is a separate explicit stage that may rewrite the wording of already-discovered rules. Neither stage can create evidence or bypass human decisions.
+
+Local semantic clustering:
+
+```bash
+node apps/cli/dist/index.js analyze owner/repo \
+  --clusterer semantic \
+  --embedding-provider local
+```
+
+Local Ollama wording refinement:
 
 ```bash
 node apps/cli/dist/index.js analyze owner/repo --provider ollama --model qwen3:8b
@@ -152,11 +194,11 @@ Remote refinement sends selected review evidence to the configured endpoint and 
 
 ## Quality gates
 
-The repository includes fixture-driven tests plus a labeled synthetic classification benchmark. The benchmark is a regression guard, **not a claim of 100% real-world accuracy**. CI exercises Node.js 20/22/24, benchmark/demo generation, Docker, the composite GitHub Action, incremental-cache behavior, deep-evidence collection, human-decision behavior, and knowledge-proposal provenance.
+The repository includes fixture-driven tests plus labeled synthetic classification/semantic regression benchmarks. These benchmarks are regression guards, **not claims of real-world accuracy**. CI exercises Node.js 20/22/24, benchmark generation, the complete reproducible Pages demo site, Docker, the composite GitHub Action, incremental-cache behavior, deep-evidence collection, human-decision behavior, redaction, cost/checkpoint behavior, and knowledge-proposal provenance.
 
 ## Local-first by design
 
-Deterministic analysis requires no AI account. Ollama can refine rules locally. Remote providers are explicit opt-in. Review text is always treated as **untrusted data**, not model instructions.
+Deterministic analysis requires no AI account. Local feature embeddings and Ollama can keep optional semantic/wording stages local. Remote providers are explicit opt-in. Review text is always treated as **untrusted data**, not model instructions.
 
 ## Architecture
 
@@ -164,17 +206,18 @@ Deterministic analysis requires no AI account. Ollama can refine rules locally. 
 GitHub → Incremental Collector → Normalizer → Classifier → Rule Discovery
        → Evidence / Confidence / Conflict Analysis
        → Documentation Coverage / Drift
-       → optional grounded wording refinement
+       → optional semantic grouping / grounded wording refinement
        → tracked Human Decisions
+       → Rule Evolution + Structured Insights
        → JSON + Agent/Contributor Exports + Static Dashboard + Watch Delta
-       → optional local Knowledge Proposal package
+       → optional local Knowledge Proposal package / explicit review PR
 ```
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`ROADMAP.md`](ROADMAP.md).
 
 ## Privacy & security
 
-No ReviewDNA account or telemetry is required. Tokens are not serialized into reports. HTML output escapes review-derived content. Output redaction can pseudonymize reviewers/paths and remove raw evidence text. Redaction disables the raw-review cache automatically. See [`SECURITY.md`](SECURITY.md).
+No ReviewDNA account or telemetry is required. Tokens are not serialized into reports. HTML output escapes review-derived content. Output redaction can pseudonymize reviewers/paths, remove raw evidence text, or selectively scrub common secrets/PII. Redaction disables raw-review caches and checkpoints automatically. See [`SECURITY.md`](SECURITY.md).
 
 ## GitHub Action
 
@@ -198,7 +241,7 @@ Continuous watch:
     mode: watch
     max-prs: '500'
     min-evidence: '3'
-    deep-evidence: 'false'
+    resume: 'true'
 ```
 
 Pin a commit SHA in security-sensitive workflows until stable version tags exist.
@@ -212,7 +255,7 @@ docker run --rm -e GITHUB_TOKEN reviewdna analyze owner/repo --max-prs 100
 
 ## Roadmap
 
-Next differentiating work: rejected-suggestion inference, CODEOWNERS-aware evidence, provider-independent semantic clustering, rule evolution, explicit GitHub publishing of knowledge proposals, GitHub Pages demos, and real-world benchmark calibration.
+Next release-focused work: production version tags for the Action, npm/package publishing, the public Pages demo deployment, an end-to-end Knowledge Proposal PR demo, real-world benchmark calibration, cross-platform E2E, and release/launch assets.
 
 ## Contributing
 
