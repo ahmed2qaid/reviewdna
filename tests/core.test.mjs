@@ -153,3 +153,18 @@ test('CONTRIBUTING suggestions include undocumented accepted rules but not ignor
   assert.ok(!text.includes(ignored.text));
   assert.match(text,/fingerprint: rdna-/);
 });
+
+test('fingerprint collisions apply decisions to every matching rule and template deduplicates them',async()=>{
+  const { applyHumanDecisions, decisionTemplate }=await import('../packages/core/dist/index.js');
+  const fixture=JSON.parse(await readFile(new URL('../fixtures/reviews.json',import.meta.url),'utf8'));
+  const base=discoverRules(fixture,'acme/backend','fixture');
+  const clone=JSON.parse(JSON.stringify(base.rules[0]));
+  clone.id='RULE-COLLISION';
+  base.rules.push(clone);
+  const fingerprint=base.rules[0].fingerprint;
+  const applied=applyHumanDecisions(base,{version:1,decisions:[{fingerprint,action:'ignore'}]});
+  assert.equal(applied.summary.applied,2);
+  assert.equal(applied.result.rules.filter(r=>r.fingerprint===fingerprint&&r.humanDecision?.action==='ignore').length,2);
+  const template=decisionTemplate(base.rules);
+  assert.equal(template.decisions.filter(d=>d.fingerprint===fingerprint).length,1);
+});
