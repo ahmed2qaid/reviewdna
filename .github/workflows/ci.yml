@@ -34,6 +34,35 @@ jobs:
             _site/
             example-output/
             plugin-example-output/
+
+  large-benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - run: npm run benchmark:large
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reviewdna-large-benchmark
+          path: benchmark-output/large-repository.json
+
+  cross-platform-e2e:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - run: npm run e2e:smoke
+
   action-smoke:
     needs: test
     runs-on: ubuntu-latest
@@ -44,6 +73,7 @@ jobs:
           repository: ${{ github.repository }}
           max-prs: '5'
           artifact-name: reviewdna-action-smoke
+
   released-action-smoke:
     needs: test
     runs-on: ubuntu-latest
@@ -54,6 +84,7 @@ jobs:
           repository: ${{ github.repository }}
           max-prs: '5'
           artifact-name: reviewdna-v0.1.0-smoke
+
   docker:
     runs-on: ubuntu-latest
     steps:
