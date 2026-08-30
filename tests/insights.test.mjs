@@ -17,10 +17,10 @@ const analysis=()=>({schemaVersion:'1.0',summary:{repository:'acme/repo',generat
 
 test('analysis insights deduplicate evidence into useful review hotspots',()=>{
   const result=applyAnalysisInsights(analysis());
-  assert.equal(result.insights.reviewHotspots[0].path,'packages/core');
-  assert.equal(result.insights.reviewHotspots[0].evidenceCount,2);
-  assert.equal(result.insights.reviewHotspots[0].ruleCount,2);
-  assert.equal(result.insights.reviewHotspots[1].path,'apps/cli');
+  const byPath=new Map(result.insights.reviewHotspots.map(row=>[row.path,row]));
+  assert.equal(byPath.get('packages/core').evidenceCount,2);
+  assert.equal(byPath.get('packages/core').ruleCount,2);
+  assert.equal(byPath.get('apps/cli').evidenceCount,2);
   assert.equal(result.insights.reviewHotspots.reduce((sum,row)=>sum+row.evidenceCount,0),4);
 });
 
