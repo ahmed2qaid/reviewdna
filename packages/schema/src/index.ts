@@ -5,6 +5,7 @@ export type RuleCategory =
 
 export type RuleStatus = 'emerging' | 'established' | 'strong' | 'disputed' | 'declining' | 'stale' | 'superseded';
 export type HumanDecisionAction = 'ignore' | 'promote' | 'override';
+export type EvidenceDisposition = 'accepted' | 'adopted' | 'acknowledged' | 'rejected-candidate' | 'unresolved';
 
 export interface HumanDecision {
   action: HumanDecisionAction;
@@ -69,6 +70,8 @@ export interface ReviewRecord {
   resolved?: boolean | undefined;
   accepted?: boolean | undefined;
   changedAfterReview?: boolean | undefined;
+  deepEvidenceChecked?: boolean | undefined;
+  explicitResponse?: 'accepted' | 'rejected' | undefined;
   source: 'review-comment' | 'review' | 'issue-comment';
 }
 
@@ -93,6 +96,10 @@ export interface RuleEvidence {
   accepted?: boolean | undefined;
   resolved?: boolean | undefined;
   changedAfterReview?: boolean | undefined;
+  deepEvidenceChecked?: boolean | undefined;
+  explicitResponse?: 'accepted' | 'rejected' | undefined;
+  disposition?: EvidenceDisposition | undefined;
+  codeOwner?: boolean | undefined;
 }
 
 export interface EngineeringRule {
@@ -120,6 +127,8 @@ export interface EngineeringRule {
     recency: number;
     acceptedEvidence: number;
     persistence: number;
+    codeOwnerEvidence?: number | undefined;
+    rejectedEvidencePenalty?: number | undefined;
     conflictPenalty: number;
     total: number;
   };
