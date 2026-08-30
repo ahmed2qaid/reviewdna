@@ -1,8 +1,23 @@
 import type { AnalysisResult, ClassifiedReview, EngineeringRule, ReviewRecord, RuleEvidence, RuleStatus } from '@reviewdna/schema';
 import { classifyReview } from './classification.js';
-import { GENERALIZERS, similarity } from './text.js';
+import { GENERALIZERS, similarity, tokens } from './text.js';
 
 export interface DiscoveryOptions{minEvidence?:number;includeBots?:boolean;}
+
+function stableHash(input:string):string{
+  let hash=2166136261;
+  for(let i=0;i<input.length;i++){hash^=input.charCodeAt(i);hash=Math.imul(hash,16777619);}
+  return (hash>>>0).toString(16).padStart(8,'0');
+}
+function fingerprintOf(cluster:ClassifiedReview[]):string{
+  const frequency=new Map<string,number>();
+  for(const review of cluster)for(const token of tokens(review.body))frequency.set(token,(frequency.get(token)??0)+1);
+  const threshold=Math.max(1,Math.ceil(cluster.length/2));
+  let concepts=[...frequency].filter(([,count])=>count>=threshold).map(([token])=>token).sort();
+  if(!concepts.length)concepts=[...tokens(cluster[0]?.body??'')].sort();
+  const category=cluster[0]?.category??'general';
+  return `rdna-${category}-${stableHash(`${category}:${concepts.slice(0,16).join('|')}`)}`;
+}
 
 function imperativeRule(text:string):string{
   let t=text.trim().replace(/^[-*]\s*/,'').replace(/^(nit|suggestion|suggestion:|please)[:\s-]*/i,'');
@@ -24,7 +39,7 @@ export function discoverRules(records:ReviewRecord[],repository:string,source:'g
   const rejected=classified.filter(r=>!candidates.includes(r)).map(r=>({id:r.id,body:r.body,reason:r.bot&&!options.includeBots?'bot':r.noise?'noise':r.oneOff?'one-off':!r.actionable?'not-actionable':'not-generalizable'})),clusters:ClassifiedReview[][]=[];
   for(const review of candidates){const target=clusters.find(c=>c[0]&&c[0].category===review.category&&similarity(c[0].body,review.body)>=.16);if(target)target.push(review);else clusters.push([review]);}
   const retained=clusters.filter(c=>{if(c.length>=minEvidence)return true;for(const r of c)rejected.push({id:r.id,body:r.body,reason:'insufficient-evidence'});return false;});
-  const rules=retained.map((cluster,index)=>{const sorted=[...cluster].sort((a,b)=>a.createdAt.localeCompare(b.createdAt)),score=scoreCluster(cluster),firstSeen=sorted[0]?.createdAt??new Date().toISOString(),lastSeen=sorted.at(-1)?.createdAt??firstSeen;return {id:`RULE-${String(index+1).padStart(4,'0')}`,text:imperativeRule([...cluster].sort((a,b)=>b.body.length-a.body.length)[0]?.body??''),category:cluster[0]?.category??'general',status:statusFrom(score.total,lastSeen,firstSeen),confidence:score.total,evidenceCount:cluster.length,reviewerCount:new Set(cluster.map(r=>r.reviewer)).size,firstSeen,lastSeen,scope:scopeOf(cluster),documented:false,documentedBy:[],documentationConflicts:[],conflictingRuleIds:[],evidence:sorted.map(evidenceOf),scoreBreakdown:score} satisfies EngineeringRule;}).sort((a,b)=>b.confidence-a.confidence);
+  const rules=retained.map((cluster,index)=>{const sorted=[...cluster].sort((a,b)=>a.createdAt.localeCompare(b.createdAt)),score=scoreCluster(cluster),firstSeen=sorted[0]?.createdAt??new Date().toISOString(),lastSeen=sorted.at(-1)?.createdAt??firstSeen;return {id:`RULE-${String(index+1).padStart(4,'0')}`,fingerprint:fingerprintOf(cluster),text:imperativeRule([...cluster].sort((a,b)=>b.body.length-a.body.length)[0]?.body??''),category:cluster[0]?.category??'general',status:statusFrom(score.total,lastSeen,firstSeen),confidence:score.total,evidenceCount:cluster.length,reviewerCount:new Set(cluster.map(r=>r.reviewer)).size,firstSeen,lastSeen,scope:scopeOf(cluster),documented:false,documentedBy:[],documentationConflicts:[],conflictingRuleIds:[],evidence:sorted.map(evidenceOf),scoreBreakdown:score} satisfies EngineeringRule;}).sort((a,b)=>b.confidence-a.confidence);
   detectConflicts(rules);const prs=new Set(records.map(r=>r.prNumber)),reviewers=new Set(records.map(r=>r.reviewer)),categoryCounts:Record<string,number>={};for(const r of rules)categoryCounts[r.category]=(categoryCounts[r.category]??0)+1;
   return {schemaVersion:'1.0',summary:{repository,generatedAt:new Date().toISOString(),reviewsAnalyzed:records.length,pullRequests:prs.size,reviewers:reviewers.size,rules:rules.length,highConfidenceRules:rules.filter(r=>r.confidence>=80).length,emergingRules:rules.filter(r=>r.status==='emerging').length,conflictingRules:rules.filter(r=>r.conflictingRuleIds.length).length,staleRules:rules.filter(r=>r.status==='stale').length,undocumentedRules:rules.filter(r=>!r.documented).length,documentationCoverage:0,documentationDrift:0,categoryCounts},rules,rejected,metadata:{engineVersion:'0.1.0',mode:'deterministic',source}};
 }

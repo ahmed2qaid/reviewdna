@@ -33,7 +33,7 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ documented vs undocumented coverage
 - ✅ baseline opposite-guidance drift detection
 - semantic documentation conflict analysis
-- generate CONTRIBUTING.suggested.md
+- ✅ generate `CONTRIBUTING.suggested.md`
 
 ## 0.5 — Incremental engine
 - ✅ `.reviewdna/` PR-state cache using GitHub `updated_at`
@@ -50,11 +50,13 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ local Watch mode with JSON/Markdown deltas
 - ✅ richer lifecycle/scope/documentation delta classification
 - ✅ cached scheduled Watch workflow example for fork-based deployments
+- ✅ tracked human `review` / `ignore` / `promote` / `override` decision file
 - GitHub Pages report deployment
-- evidence-backed knowledge pull requests and human promote/ignore decisions
+- evidence-backed knowledge pull requests
 
 ## 0.7 — Rich dashboard
 - ✅ rule explorer with filters/evidence expansion
+- ✅ display rule fingerprints and human decisions
 - review heatmap
 - ✅ documentation coverage/drift
 - ✅ CLI snapshot compare
@@ -77,7 +79,7 @@ The target is a production-quality v1.0, not a toy demo.
 
 ## 1.0 — Stable
 - calibrated evidence/confidence model
-- stable schema and CLI contracts
+- stable schema, fingerprint and CLI contracts
 - production tagged Action
 - complete local-first flow
 - public demo repositories

@@ -17,3 +17,6 @@
 - Rich Watch deltas for lifecycle, scope and documentation changes, plus history snapshots and configurable baseline files.
 - Cached GitHub Action Watch mode with a scheduled fork-ready workflow example.
 - Optional `--deep-evidence` comparison from reviewed commit to merged PR head; same-file post-review changes strengthen resolved evidence without being treated as causal proof.
+- Stable-ish rule fingerprints plus tracked `reviewdna.decisions.json` human decisions (`review`, `ignore`, `promote`, `override`).
+- Human decisions preserve original evidence/confidence, are visible in reports, and are respected by agent exports and Watch comparisons.
+- Added `CONTRIBUTING.suggested.md` for recurring undocumented conventions and a neutral `decisions-template` CLI command.

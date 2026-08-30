@@ -4,6 +4,25 @@ export type RuleCategory =
   | 'dependency' | 'style' | 'general';
 
 export type RuleStatus = 'emerging' | 'established' | 'strong' | 'disputed' | 'declining' | 'stale' | 'superseded';
+export type HumanDecisionAction = 'ignore' | 'promote' | 'override';
+
+export interface HumanDecision {
+  action: HumanDecisionAction;
+  reason?: string | undefined;
+  overrideText?: string | undefined;
+}
+
+export interface RuleDecisionInput {
+  fingerprint: string;
+  action: HumanDecisionAction | 'review';
+  reason?: string | undefined;
+  overrideText?: string | undefined;
+}
+
+export interface DecisionsFile {
+  version: 1;
+  decisions: RuleDecisionInput[];
+}
 
 export interface ReviewRecord {
   id: string;
@@ -47,7 +66,10 @@ export interface RuleEvidence {
 
 export interface EngineeringRule {
   id: string;
+  fingerprint: string;
   text: string;
+  originalText?: string | undefined;
+  humanDecision?: HumanDecision | undefined;
   category: RuleCategory;
   status: RuleStatus;
   confidence: number;

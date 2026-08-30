@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { applyDocumentationCoverage, compareAnalysisResults, discoverRules, redactAnalysis } from '@reviewdna/core';
+import { applyDocumentationCoverage, applyHumanDecisions, compareAnalysisResults, decisionTemplate, discoverRules, redactAnalysis } from '@reviewdna/core';
 import { GitHubCollector } from '@reviewdna/github';
 import type { GitHubCollectionState } from '@reviewdna/github';
-import { exportAgents, exportClaude, exportCursor, exportMarkdown, exportDeltaMarkdown } from '@reviewdna/exporters';
+import { exportAgents, exportClaude, exportContributing, exportCursor, exportMarkdown, exportDeltaMarkdown } from '@reviewdna/exporters';
 import { OllamaProvider, OpenAICompatibleProvider, refineAnalysis } from '@reviewdna/providers';
 import type { ReviewDNAProvider } from '@reviewdna/providers';
 import { renderHtml } from '@reviewdna/report';
-import type { AnalysisResult, ReviewRecord } from '@reviewdna/schema';
+import type { AnalysisResult, DecisionsFile, ReviewRecord } from '@reviewdna/schema';
 
 const VERSION = '0.2.0-dev';
 const flag = (args:string[], name:string, fallback?:string) => { const i=args.indexOf(name); return i>=0 ? args[i+1] : fallback; };
 const has = (args:string[], name:string) => args.includes(name);
 
 function help() {
-  console.log(`ReviewDNA ${VERSION}\n\nYour reviews already contain your engineering DNA.\n\nCommands:\n  reviewdna analyze owner/repo [--max-prs 100] [--min-evidence 2] [--out reviewdna-output] [--issue-comments] [--include-bots] [--redact] [--redact-evidence] [--no-cache] [--cache-dir .reviewdna] [--provider deterministic|ollama|openai-compatible] [--deep-evidence]\n  reviewdna analyze-fixture file.json [--min-evidence 2] [--out reviewdna-output] [--provider ...]\n  reviewdna export result.json --format agents|claude|cursor|markdown\n  reviewdna compare before.json after.json\n  reviewdna watch owner/repo [analyze options] [--out reviewdna-watch] [--baseline-file path] [--fail-on-changes]\n  reviewdna doctor\n  reviewdna --version\n\nAI refinement options (explicit opt-in):\n  --provider ollama --model qwen3:8b [--provider-url http://127.0.0.1:11434]\n  --provider openai-compatible --model MODEL [--provider-url URL]\n  --max-refine-rules N\n  --provider-continue-on-error\n\nEnvironment:\n  GITHUB_TOKEN\n  REVIEWDNA_LLM_BASE_URL\n  REVIEWDNA_LLM_API_KEY\n  REVIEWDNA_LLM_MODEL\n`);
+  console.log(`ReviewDNA ${VERSION}\n\nYour reviews already contain your engineering DNA.\n\nCommands:\n  reviewdna analyze owner/repo [--max-prs 100] [--min-evidence 2] [--out reviewdna-output] [--issue-comments] [--include-bots] [--redact] [--redact-evidence] [--no-cache] [--cache-dir .reviewdna] [--provider deterministic|ollama|openai-compatible] [--deep-evidence] [--decisions reviewdna.decisions.json]\n  reviewdna analyze-fixture file.json [--min-evidence 2] [--out reviewdna-output] [--provider ...]\n  reviewdna export result.json --format agents|claude|cursor|contributing|markdown\n  reviewdna compare before.json after.json\n  reviewdna decisions-template result.json [--out reviewdna.decisions.json]\n  reviewdna watch owner/repo [analyze options] [--out reviewdna-watch] [--baseline-file path] [--fail-on-changes]\n  reviewdna doctor\n  reviewdna --version\n\nAI refinement options (explicit opt-in):\n  --provider ollama --model qwen3:8b [--provider-url http://127.0.0.1:11434]\n  --provider openai-compatible --model MODEL [--provider-url URL]\n  --max-refine-rules N\n  --provider-continue-on-error\n\nEnvironment:\n  GITHUB_TOKEN\n  REVIEWDNA_LLM_BASE_URL\n  REVIEWDNA_LLM_API_KEY\n  REVIEWDNA_LLM_MODEL\n`);
 }
 
 async function loadCache(path:string):Promise<GitHubCollectionState|undefined> { try { return JSON.parse(await readFile(path,'utf8')) as GitHubCollectionState; } catch { return undefined; } }
@@ -50,6 +50,21 @@ async function maybeRefine(result:AnalysisResult,args:string[]):Promise<Analysis
   return refineAnalysis(result,provider,{maxRules,continueOnError:has(args,'--provider-continue-on-error'),onProgress:(current,total)=>process.stderr.write(`\rRefining rules ${current}/${total}`)}).finally(()=>process.stderr.write('\n'));
 }
 
+async function maybeApplyDecisions(result:AnalysisResult,args:string[]):Promise<AnalysisResult> {
+  if(has(args,'--no-decisions')) return result;
+  const path=flag(args,'--decisions','reviewdna.decisions.json')!;
+  try {
+    const file=JSON.parse(await readFile(path,'utf8')) as DecisionsFile;
+    const applied=applyHumanDecisions(result,file);
+    if(applied.summary.applied||applied.summary.unmatched.length)process.stderr.write(`ReviewDNA decisions: ${applied.summary.applied} applied (${applied.summary.promoted} promoted, ${applied.summary.ignored} ignored, ${applied.summary.overridden} overridden); ${applied.summary.unmatched.length} unmatched.\n`);
+    return applied.result;
+  } catch(err) {
+    const code=(err as {code?:string})?.code;
+    if(code==='ENOENT') return result;
+    throw err;
+  }
+}
+
 async function save(result:AnalysisResult,outDir:string) {
   await mkdir(outDir,{recursive:true});
   await Promise.all([
@@ -58,7 +73,8 @@ async function save(result:AnalysisResult,outDir:string) {
     writeFile(resolve(outDir,'engineering-dna.md'),exportMarkdown(result)),
     writeFile(resolve(outDir,'AGENTS.suggested.md'),exportAgents(result)),
     writeFile(resolve(outDir,'CLAUDE.suggested.md'),exportClaude(result)),
-    writeFile(resolve(outDir,'cursor.suggested.mdc'),exportCursor(result))
+    writeFile(resolve(outDir,'cursor.suggested.mdc'),exportCursor(result)),
+    writeFile(resolve(outDir,'CONTRIBUTING.suggested.md'),exportContributing(result))
   ]);
 }
 
@@ -79,6 +95,7 @@ async function analyzeRepository(repo:string,args:string[]):Promise<{result:Anal
   let result=discoverRules(collection.records,repo,'github',{minEvidence,includeBots:has(args,'--include-bots')});
   result=applyDocumentationCoverage(result,docs);
   result=await maybeRefine(result,args);
+  result=await maybeApplyDecisions(result,args);
   if(redacting) result=redactAnalysis(result,{reviewers:true,paths:true,evidenceBodies:has(args,'--redact-evidence')});
   await save(result,out);
   return {result,out};
@@ -90,7 +107,7 @@ async function main() {
   if(has(args,'--version')||cmd==='--version'){console.log(VERSION);return;}
   if(cmd==='doctor'){console.log(`ReviewDNA doctor\nNode: ${process.version} ✓\nGitHub token: ${process.env.GITHUB_TOKEN?'present ✓':'not set (public anonymous mode)'}\nRuntime fetch: ${typeof fetch==='function'?'available ✓':'missing ✗'}\nOllama URL: ${process.env.REVIEWDNA_LLM_BASE_URL||'not configured'}\nRemote LLM key: ${process.env.REVIEWDNA_LLM_API_KEY?'present':'not configured'}\n`);return;}
   if(cmd==='analyze'){const repo=args[1];if(!repo)throw new Error('Missing repository. Example: reviewdna analyze owner/repo');const {result,out}=await analyzeRepository(repo,args);summary(result);console.log(`Output: ${resolve(out)}\nOpen reviewdna-report.html in your browser.`);return;}
-  if(cmd==='analyze-fixture'){const file=args[1];if(!file)throw new Error('Missing fixture JSON path.');const out=flag(args,'--out','reviewdna-output')!,minEvidence=Number(flag(args,'--min-evidence','2')),records=JSON.parse(await readFile(file,'utf8')) as ReviewRecord[],repo=records[0]?.repo??'fixture/repository';let result=discoverRules(records,repo,'fixture',{minEvidence,includeBots:has(args,'--include-bots')});result=await maybeRefine(result,args);if(has(args,'--redact')||has(args,'--redact-evidence'))result=redactAnalysis(result,{reviewers:true,paths:true,evidenceBodies:has(args,'--redact-evidence')});await save(result,out);summary(result);return;}
+  if(cmd==='analyze-fixture'){const file=args[1];if(!file)throw new Error('Missing fixture JSON path.');const out=flag(args,'--out','reviewdna-output')!,minEvidence=Number(flag(args,'--min-evidence','2')),records=JSON.parse(await readFile(file,'utf8')) as ReviewRecord[],repo=records[0]?.repo??'fixture/repository';let result=discoverRules(records,repo,'fixture',{minEvidence,includeBots:has(args,'--include-bots')});result=await maybeRefine(result,args);result=await maybeApplyDecisions(result,args);if(has(args,'--redact')||has(args,'--redact-evidence'))result=redactAnalysis(result,{reviewers:true,paths:true,evidenceBodies:has(args,'--redact-evidence')});await save(result,out);summary(result);return;}
   if(cmd==='watch'){
     const repo=args[1];if(!repo)throw new Error('Missing repository. Example: reviewdna watch owner/repo');
     const out=flag(args,'--out','reviewdna-watch')!,baselineFile=flag(args,'--baseline-file',resolve(out,'reviewdna.json'))!;
@@ -107,8 +124,14 @@ async function main() {
     if(has(args,'--fail-on-changes')&&totalChanges>0)process.exitCode=2;
     return;
   }
+  if(cmd==='decisions-template'){
+    const file=args[1];if(!file)throw new Error('Usage: reviewdna decisions-template reviewdna.json [--out reviewdna.decisions.json]');
+    const result=JSON.parse(await readFile(file,'utf8')) as AnalysisResult,out=flag(args,'--out','reviewdna.decisions.json')!,template=decisionTemplate(result.rules);
+    const parent=resolve(out,'..');await mkdir(parent,{recursive:true});await writeFile(out,JSON.stringify(template,null,2));
+    console.log(`Human-review decision template written to ${resolve(out)}. Every entry starts as neutral "review".`);return;
+  }
   if(cmd==='compare'){const beforeFile=args[1],afterFile=args[2];if(!beforeFile||!afterFile)throw new Error('Usage: reviewdna compare before.json after.json');const before=JSON.parse(await readFile(beforeFile,'utf8')) as AnalysisResult,after=JSON.parse(await readFile(afterFile,'utf8')) as AnalysisResult,delta=compareAnalysisResults(before,after);console.log(`ReviewDNA compare\n\nNew rules: ${delta.newRules.length}\nRemoved rules: ${delta.removedRules.length}\nStrengthened: ${delta.strengthened.length}\nWeakened: ${delta.weakened.length}\nChanged: ${delta.changed.length}\nDocumentation changes: ${delta.documentationChanges.length}\n`);for(const r of delta.newRules)console.log(`+ [${r.category}] ${r.text}`);for(const r of delta.removedRules)console.log(`- [${r.category}] ${r.text}`);for(const p of delta.strengthened)console.log(`↑ ${p.after.text} (${p.before.confidence}% → ${p.after.confidence}%)`);for(const p of delta.weakened)console.log(`↓ ${p.after.text} (${p.before.confidence}% → ${p.after.confidence}%)`);for(const p of delta.documentationChanges)console.log(`D ${p.after.text} (${p.changes.join(', ')})`);return;}
-  if(cmd==='export'){const file=args[1];if(!file)throw new Error('Missing reviewdna.json path.');const format=flag(args,'--format','agents')!,result=JSON.parse(await readFile(file,'utf8')) as AnalysisResult,exporters:Record<string,(r:AnalysisResult)=>string>={agents:exportAgents,claude:exportClaude,cursor:exportCursor,markdown:exportMarkdown},fn=exporters[format];if(!fn)throw new Error(`Unknown format: ${format}`);process.stdout.write(fn(result));return;}
+  if(cmd==='export'){const file=args[1];if(!file)throw new Error('Missing reviewdna.json path.');const format=flag(args,'--format','agents')!,result=JSON.parse(await readFile(file,'utf8')) as AnalysisResult,exporters:Record<string,(r:AnalysisResult)=>string>={agents:exportAgents,claude:exportClaude,cursor:exportCursor,contributing:exportContributing,markdown:exportMarkdown},fn=exporters[format];if(!fn)throw new Error(`Unknown format: ${format}`);process.stdout.write(fn(result));return;}
   throw new Error(`Unknown command: ${cmd}`);
 }
 

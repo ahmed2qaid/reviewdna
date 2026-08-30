@@ -19,8 +19,10 @@ export function compareAnalysisResults(before:AnalysisResult,after:AnalysisResul
   const used=new Set<string>(),pairs:RulePair[]=[];
   for(const oldRule of before.rules){
     let best:EngineeringRule|undefined,bestScore=0;
+    const exact=after.rules.find(next=>!used.has(next.id)&&next.fingerprint===oldRule.fingerprint);
+    if(exact){best=exact;bestScore=1;}
     for(const next of after.rules){
-      if(used.has(next.id)||oldRule.category!==next.category)continue;
+      if(bestScore===1||used.has(next.id)||oldRule.category!==next.category)continue;
       const score=similarity(oldRule.text,next.text);
       if(score>bestScore){best=next;bestScore=score;}
     }
@@ -33,6 +35,8 @@ export function compareAnalysisResults(before:AnalysisResult,after:AnalysisResul
     if(p.before.evidenceCount!==p.after.evidenceCount)changes.push(`evidence:${p.before.evidenceCount}->${p.after.evidenceCount}`);
     if(p.before.reviewerCount!==p.after.reviewerCount)changes.push(`reviewers:${p.before.reviewerCount}->${p.after.reviewerCount}`);
     if(!sameStrings(p.before.scope,p.after.scope))changes.push('scope');
+    if((p.before.humanDecision?.action??'none')!==(p.after.humanDecision?.action??'none'))changes.push(`human-decision:${p.before.humanDecision?.action??'none'}->${p.after.humanDecision?.action??'none'}`);
+    if(p.before.text!==p.after.text&&(p.before.humanDecision?.action==='override'||p.after.humanDecision?.action==='override'))changes.push('human-override-text');
     return {...p,changes};
   }).filter(p=>p.changes.length>0);
   const documentationChanges=pairs.map(p=>{
