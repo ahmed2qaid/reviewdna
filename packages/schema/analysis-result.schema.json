@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://reviewdna.dev/schema/analysis-result-1.0.json",
+  "title": "ReviewDNA AnalysisResult 1.0",
+  "description": "Machine-readable ReviewDNA analysis output. Inferred rules are evidence, not repository policy unless explicitly approved by maintainers.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "summary", "rules", "rejected", "metadata"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "summary": {"$ref": "#/$defs/AnalysisSummary"},
+    "rules": {"type": "array", "items": {"$ref": "#/$defs/EngineeringRule"}},
+    "rejected": {"type": "array", "items": {"$ref": "#/$defs/RejectedReview"}},
+    "insights": {"$ref": "#/$defs/AnalysisInsights"},
+    "metadata": {"$ref": "#/$defs/AnalysisMetadata"}
+  },
+  "$defs": {
+    "RuleCategory": {
+      "type": "string",
+      "enum": ["architecture", "security", "testing", "performance", "api-design", "naming", "maintainability", "error-handling", "documentation", "dependency", "style", "general"]
+    },
+    "RuleStatus": {
+      "type": "string",
+      "enum": ["emerging", "established", "strong", "disputed", "declining", "stale", "superseded"]
+    },
+    "EvidenceDisposition": {
+      "type": "string",
+      "enum": ["accepted", "adopted", "acknowledged", "rejected-candidate", "unresolved"]
+    },
+    "HumanDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action"],
+      "properties": {
+        "action": {"type": "string", "enum": ["ignore", "promote", "override"]},
+        "reason": {"type": "string"},
+        "overrideText": {"type": "string"}
+      }
+    },
+    "DocumentationMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "kind", "matcher", "score"],
+      "properties": {
+        "path": {"type": "string"},
+        "kind": {"type": "string", "enum": ["support", "conflict"]},
+        "matcher": {"type": "string", "enum": ["lexical", "semantic"]},
+        "score": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "RuleTimelineEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["at", "type"],
+      "properties": {
+        "at": {"type": "string"},
+        "type": {"type": "string", "enum": ["introduced", "reinforced", "adopted", "rejected-signal", "superseded"]},
+        "evidenceId": {"type": "string"},
+        "prNumber": {"type": "integer", "minimum": 1},
+        "relatedFingerprint": {"type": "string"}
+      }
+    },
+    "RuleRelationships": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["childFingerprints", "supersedesFingerprints"],
+      "properties": {
+        "parentFingerprint": {"type": "string"},
+        "childFingerprints": {"type": "array", "items": {"type": "string"}},
+        "supersedesFingerprints": {"type": "array", "items": {"type": "string"}},
+        "supersededByFingerprint": {"type": "string"}
+      }
+    },
+    "RuleEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "prNumber", "reviewer", "createdAt", "url", "body"],
+      "properties": {
+        "id": {"type": "string"},
+        "prNumber": {"type": "integer", "minimum": 1},
+        "reviewer": {"type": "string"},
+        "createdAt": {"type": "string"},
+        "url": {"type": "string"},
+        "body": {"type": "string"},
+        "path": {"type": "string"},
+        "accepted": {"type": "boolean"},
+        "resolved": {"type": "boolean"},
+        "changedAfterReview": {"type": "boolean"},
+        "deepEvidenceChecked": {"type": "boolean"},
+        "explicitResponse": {"type": "string", "enum": ["accepted", "rejected"]},
+        "disposition": {"$ref": "#/$defs/EvidenceDisposition"},
+        "codeOwner": {"type": "boolean"}
+      }
+    },
+    "ScoreBreakdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["frequency", "reviewerDiversity", "recency", "acceptedEvidence", "persistence", "conflictPenalty", "total"],
+      "properties": {
+        "frequency": {"type": "number"},
+        "reviewerDiversity": {"type": "number"},
+        "recency": {"type": "number"},
+        "acceptedEvidence": {"type": "number"},
+        "persistence": {"type": "number"},
+        "codeOwnerEvidence": {"type": "number"},
+        "rejectedEvidencePenalty": {"type": "number"},
+        "conflictPenalty": {"type": "number"},
+        "total": {"type": "number"}
+      }
+    },
+    "EngineeringRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "fingerprint", "text", "category", "status", "confidence", "evidenceCount", "reviewerCount", "firstSeen", "lastSeen", "scope", "documented", "documentedBy", "documentationConflicts", "conflictingRuleIds", "evidence", "scoreBreakdown"],
+      "properties": {
+        "id": {"type": "string"},
+        "fingerprint": {"type": "string"},
+        "text": {"type": "string"},
+        "originalText": {"type": "string"},
+        "humanDecision": {"$ref": "#/$defs/HumanDecision"},
+        "category": {"$ref": "#/$defs/RuleCategory"},
+        "status": {"$ref": "#/$defs/RuleStatus"},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 100},
+        "evidenceCount": {"type": "integer", "minimum": 0},
+        "reviewerCount": {"type": "integer", "minimum": 0},
+        "firstSeen": {"type": "string"},
+        "lastSeen": {"type": "string"},
+        "scope": {"type": "array", "items": {"type": "string"}},
+        "documented": {"type": "boolean"},
+        "documentedBy": {"type": "array", "items": {"type": "string"}},
+        "documentationConflicts": {"type": "array", "items": {"type": "string"}},
+        "documentationEvidence": {"type": "array", "items": {"$ref": "#/$defs/DocumentationMatch"}},
+        "conflictingRuleIds": {"type": "array", "items": {"type": "string"}},
+        "relationships": {"$ref": "#/$defs/RuleRelationships"},
+        "timeline": {"type": "array", "items": {"$ref": "#/$defs/RuleTimelineEvent"}},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/RuleEvidence"}},
+        "scoreBreakdown": {"$ref": "#/$defs/ScoreBreakdown"}
+      }
+    },
+    "AnalysisSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "generatedAt", "reviewsAnalyzed", "pullRequests", "reviewers", "rules", "highConfidenceRules", "emergingRules", "conflictingRules", "staleRules", "undocumentedRules", "documentationCoverage", "documentationDrift", "categoryCounts"],
+      "properties": {
+        "repository": {"type": "string"},
+        "generatedAt": {"type": "string"},
+        "reviewsAnalyzed": {"type": "integer", "minimum": 0},
+        "pullRequests": {"type": "integer", "minimum": 0},
+        "reviewers": {"type": "integer", "minimum": 0},
+        "rules": {"type": "integer", "minimum": 0},
+        "highConfidenceRules": {"type": "integer", "minimum": 0},
+        "emergingRules": {"type": "integer", "minimum": 0},
+        "conflictingRules": {"type": "integer", "minimum": 0},
+        "staleRules": {"type": "integer", "minimum": 0},
+        "undocumentedRules": {"type": "integer", "minimum": 0},
+        "documentationCoverage": {"type": "number", "minimum": 0, "maximum": 100},
+        "documentationDrift": {"type": "integer", "minimum": 0},
+        "parentRules": {"type": "integer", "minimum": 0},
+        "childRules": {"type": "integer", "minimum": 0},
+        "supersededRules": {"type": "integer", "minimum": 0},
+        "categoryCounts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+      }
+    },
+    "ReviewHotspot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "evidenceCount", "ruleCount", "percentage", "categories"],
+      "properties": {
+        "path": {"type": "string"},
+        "evidenceCount": {"type": "integer", "minimum": 0},
+        "ruleCount": {"type": "integer", "minimum": 0},
+        "percentage": {"type": "number", "minimum": 0, "maximum": 100},
+        "categories": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+      }
+    },
+    "AutomationOpportunity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fingerprint", "text", "category", "kind", "strength", "reason", "suggestedMechanisms", "scope"],
+      "properties": {
+        "fingerprint": {"type": "string"},
+        "text": {"type": "string"},
+        "category": {"$ref": "#/$defs/RuleCategory"},
+        "kind": {"type": "string", "enum": ["lint-rule", "format-rule", "type-policy", "test-gate", "security-scan", "dependency-policy", "ci-check"]},
+        "strength": {"type": "string", "enum": ["high", "medium"]},
+        "reason": {"type": "string"},
+        "suggestedMechanisms": {"type": "array", "items": {"type": "string"}},
+        "scope": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "AnalysisInsights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reviewHotspots", "automationOpportunities"],
+      "properties": {
+        "reviewHotspots": {"type": "array", "items": {"$ref": "#/$defs/ReviewHotspot"}},
+        "automationOpportunities": {"type": "array", "items": {"$ref": "#/$defs/AutomationOpportunity"}}
+      }
+    },
+    "RejectedReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "body", "reason"],
+      "properties": {
+        "id": {"type": "string"},
+        "body": {"type": "string"},
+        "reason": {"type": "string"}
+      }
+    },
+    "AnalysisMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engineVersion", "mode", "source"],
+      "properties": {
+        "engineVersion": {"type": "string"},
+        "mode": {"type": "string", "enum": ["deterministic", "hybrid", "llm"]},
+        "source": {"type": "string", "enum": ["github", "fixture"]},
+        "redacted": {"type": "boolean"},
+        "sensitiveRedactions": {"type": "integer", "minimum": 0},
+        "resumedFromCheckpoint": {"type": "string"},
+        "provider": {"type": "string"},
+        "refinedRules": {"type": "integer", "minimum": 0},
+        "clusterer": {"type": "string", "enum": ["deterministic", "semantic"]},
+        "embeddingProvider": {"type": "string"},
+        "semanticThreshold": {"type": "number", "minimum": 0, "maximum": 1},
+        "evolutionModel": {"type": "string"},
+        "documentationMatcher": {"type": "string", "enum": ["lexical", "semantic"]},
+        "documentationEmbeddingProvider": {"type": "string"},
+        "documentationSemanticThreshold": {"type": "number", "minimum": 0, "maximum": 1},
+        "insightsModel": {"type": "string"}
+      }
+    }
+  }
+}
