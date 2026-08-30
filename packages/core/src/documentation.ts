@@ -110,6 +110,13 @@ export function redactAnalysis(input:AnalysisResult,options:RedactionOptions={re
       if(options.evidenceBodies)e.body='[redacted review text]';else if(options.sensitiveText)e.body=scrub(e.body)??e.body;
     }
   }
+  if(result.insights){
+    for(const hotspot of result.insights.reviewHotspots){if(options.paths)hotspot.path='[redacted-hotspot]';else if(options.sensitiveText)hotspot.path=scrub(hotspot.path)??hotspot.path;}
+    for(const opportunity of result.insights.automationOpportunities){
+      if(options.sensitiveText){opportunity.text=scrub(opportunity.text)??opportunity.text;opportunity.reason=scrub(opportunity.reason)??opportunity.reason;opportunity.suggestedMechanisms=opportunity.suggestedMechanisms.map(value=>scrub(value)??value);}
+      if(options.paths)opportunity.scope=opportunity.scope.map(()=>'[redacted-scope]');else if(options.sensitiveText)opportunity.scope=opportunity.scope.map(value=>scrub(value)??value);
+    }
+  }
   if(options.sensitiveText){
     for(const rejected of result.rejected){rejected.body=scrub(rejected.body)??rejected.body;rejected.reason=scrub(rejected.reason)??rejected.reason;}
     result.metadata.sensitiveRedactions=sensitiveRedactions;
