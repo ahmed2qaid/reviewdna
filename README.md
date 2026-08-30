@@ -108,6 +108,27 @@ Supported actions:
 
 ReviewDNA automatically reads `reviewdna.decisions.json` when present. Use `--no-decisions` to bypass it or `--decisions path/to/file.json` for another tracked file. Unknown fingerprints are reported rather than silently discarded. Fingerprints are intended as pre-v1 identity anchors; the schema can still evolve before v1.0.
 
+## Knowledge proposal package
+
+Once a team has reviewed an analysis, ReviewDNA can package the exportable conventions into a self-contained review bundle:
+
+```bash
+node apps/cli/dist/index.js proposal reviewdna-output/reviewdna.json --out reviewdna-proposal
+```
+
+The bundle contains:
+
+- `reviewdna-proposal.json` — manifest with rule fingerprints, decisions, scopes and evidence links.
+- `REVIEWDNA_PROPOSAL.md` — human-readable proposal with evidence references.
+- `AGENTS.proposed.md`
+- `CLAUDE.proposed.md`
+- `cursor.proposed.mdc`
+- `CONTRIBUTING.proposed.md`
+
+The proposal uses the same policy-selection rules as the agent exports: ignored rules are excluded, promoted/overridden rules are included, and automatically selected rules must pass the confidence/lifecycle/conflict gates. It preserves source evidence URLs so reviewers can verify why each convention exists.
+
+**`proposal` does not modify the target repository and does not open a Pull Request.** It deliberately creates a reviewable package first. An optional GitHub PR publishing workflow is a later layer and will remain explicit rather than silently changing policy files.
+
 ## Optional AI refinement
 
 Deterministic mining remains the default. AI refinement is an explicit second stage that may rewrite the wording of already-discovered rules; it cannot create rules or change evidence/confidence.
@@ -131,7 +152,7 @@ Remote refinement sends selected review evidence to the configured endpoint and 
 
 ## Quality gates
 
-The repository includes fixture-driven tests plus a labeled synthetic classification benchmark. The benchmark is a regression guard, **not a claim of 100% real-world accuracy**. CI exercises Node.js 20/22/24, benchmark/demo generation, Docker, the composite GitHub Action, incremental-cache behavior, deep-evidence collection, and human-decision behavior.
+The repository includes fixture-driven tests plus a labeled synthetic classification benchmark. The benchmark is a regression guard, **not a claim of 100% real-world accuracy**. CI exercises Node.js 20/22/24, benchmark/demo generation, Docker, the composite GitHub Action, incremental-cache behavior, deep-evidence collection, human-decision behavior, and knowledge-proposal provenance.
 
 ## Local-first by design
 
@@ -146,6 +167,7 @@ GitHub → Incremental Collector → Normalizer → Classifier → Rule Discover
        → optional grounded wording refinement
        → tracked Human Decisions
        → JSON + Agent/Contributor Exports + Static Dashboard + Watch Delta
+       → optional local Knowledge Proposal package
 ```
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`ROADMAP.md`](ROADMAP.md).
@@ -190,7 +212,7 @@ docker run --rm -e GITHUB_TOKEN reviewdna analyze owner/repo --max-prs 100
 
 ## Roadmap
 
-Next differentiating work: rejected-suggestion inference, CODEOWNERS-aware evidence, provider-independent semantic clustering, rule evolution, evidence-backed knowledge PRs, GitHub Pages demos, and real-world benchmark calibration.
+Next differentiating work: rejected-suggestion inference, CODEOWNERS-aware evidence, provider-independent semantic clustering, rule evolution, explicit GitHub publishing of knowledge proposals, GitHub Pages demos, and real-world benchmark calibration.
 
 ## Contributing
 
