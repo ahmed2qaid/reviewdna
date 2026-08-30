@@ -37,15 +37,17 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ common AGENTS/CLAUDE/CONTRIBUTING/Copilot/Cursor scanning
 - ✅ documented vs undocumented coverage
 - ✅ baseline opposite-guidance drift detection
-- semantic documentation conflict analysis
+- ✅ semantic documentation support/conflict analysis with polarity safeguards
+- ✅ auditable lexical/semantic documentation provenance and Watch deltas
 - ✅ generate `CONTRIBUTING.suggested.md`
+- real-world documentation matcher calibration
 
 ## 0.5 — Incremental engine
 - ✅ `.reviewdna/` PR-state cache using GitHub `updated_at`
 - ✅ incremental PR collection
 - content hashes for non-GitHub inputs
 - resumable pipeline checkpoints
-- cost estimator for optional LLM stages
+- cost estimator for optional LLM/embedding stages
 - ✅ redaction and automatic raw-cache disablement under redaction
 - richer secret/PII redaction
 
@@ -67,6 +69,7 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ display evidence dispositions, CODEOWNER signals and score effects
 - review heatmap
 - ✅ documentation coverage/drift
+- ✅ display documentation support/conflict provenance and matcher scores
 - ✅ CLI snapshot compare
 - ✅ relationship badges and expandable rule evolution timelines
 - automation opportunities and exportable share cards
