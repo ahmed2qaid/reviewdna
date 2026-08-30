@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.0 - 2026-08-30
+- Consolidated ReviewDNA into a full pre-v1 engineering-knowledge mining platform release.
+- Added evidence dispositions, conservative rejected-candidate inference, explicit PR-author response signals, deep-evidence checked state, and CODEOWNERS-aware confidence effects.
+- Added provider-neutral embeddings, local/Ollama/OpenAI-compatible embedding providers, guarded semantic clustering, and grounded optional wording refinement.
+- Added semantic documentation support/conflict analysis with polarity safeguards and auditable documentation provenance.
+- Added parent/child rule relationships, conservative supersession inference, and evidence-derived rule-evolution timelines.
+- Added tracked human decisions (`review`, `ignore`, `promote`, `override`) and reviewable Knowledge Proposal bundles.
+- Added dry-run-first GitHub Proposal publishing with explicit `--apply`, branch/path restrictions, and no silent policy overwrite.
+- Added incremental GitHub cache, content/options hashing, resumable checkpoints, token/cost preflight, remote-budget enforcement, and targeted secret/PII redaction.
+- Added Review Hotspots, deterministic Automation Opportunities, documentation provenance, relationship/timeline views, and an exportable SVG share card to the static dashboard.
+- Added a public Draft 2020-12 `AnalysisResult` JSON Schema and executable programmatic API example.
+- Added versioned Plugin SDK contracts for collectors/providers/exporters/scorers plus an executable plugin example.
+- Added a GitLab collector prototype with self-hosted support and offline tests.
+- Added schema ABI/fingerprint compatibility coverage, deterministic fuzz/security tests, a reproducible 10k-review synthetic benchmark, and Windows/macOS/Linux CLI E2E.
+- Added a generated searchable static docs site and pre-v1 migration guide.
+- Rebuilt the GitHub README as a visual showcase with real badges, 60-second demo, Mermaid architecture, launch checklist, and repository-owned social-preview artwork.
+- Bumped the root workspace, CLI, and all `@reviewdna/*` workspace packages to `0.2.0`.
+
 ## 0.1.0 - 2026-08-30
 - Initial ReviewDNA TypeScript workspace and typed schema.
 - GitHub collector, deterministic classifier and evidence-backed rule discovery.
