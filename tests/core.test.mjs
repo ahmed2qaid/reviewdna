@@ -110,3 +110,46 @@ test('resolved plus same-file change is stronger than resolved-only evidence',()
   const resolved=discoverRules(make(false),'a/b','fixture').rules[0];
   assert.ok(deep.scoreBreakdown.acceptedEvidence>resolved.scoreBreakdown.acceptedEvidence);
 });
+
+test('human decisions ignore, promote and override without removing evidence',async()=>{
+  const { applyHumanDecisions }=await import('../packages/core/dist/index.js');
+  const { exportAgents }=await import('../packages/exporters/dist/index.js');
+  const fixture=JSON.parse(await readFile(new URL('../fixtures/reviews.json',import.meta.url),'utf8'));
+  const base=discoverRules(fixture,'acme/backend','fixture');
+  const [first,second,third]=base.rules;
+  assert.ok(first?.fingerprint&&second?.fingerprint&&third?.fingerprint);
+  second.confidence=20; second.status='emerging';
+  const applied=applyHumanDecisions(base,{version:1,decisions:[
+    {fingerprint:first.fingerprint,action:'ignore',reason:'team rejected this convention'},
+    {fingerprint:second.fingerprint,action:'promote',reason:'maintainer-approved policy'},
+    {fingerprint:third.fingerprint,action:'override',overrideText:'Add regression tests for behavior changes before merge.'}
+  ]});
+  assert.equal(applied.summary.applied,3);
+  assert.equal(applied.result.rules[0].evidence.length,base.rules[0].evidence.length);
+  assert.equal(applied.result.rules[2].originalText,base.rules[2].text);
+  const agents=exportAgents(applied.result);
+  assert.ok(!agents.includes(first.text));
+  assert.ok(agents.includes(second.text));
+  assert.match(agents,/Add regression tests for behavior changes before merge/);
+});
+
+test('decision template is neutral and fingerprints are stable for the same fixture',async()=>{
+  const { decisionTemplate }=await import('../packages/core/dist/index.js');
+  const fixture=JSON.parse(await readFile(new URL('../fixtures/reviews.json',import.meta.url),'utf8'));
+  const first=discoverRules(fixture,'acme/backend','fixture'),second=discoverRules(fixture,'acme/backend','fixture');
+  assert.deepEqual(first.rules.map(r=>r.fingerprint),second.rules.map(r=>r.fingerprint));
+  const template=decisionTemplate(first.rules);
+  assert.ok(template.decisions.every(d=>d.action==='review'));
+});
+
+test('CONTRIBUTING suggestions include undocumented accepted rules but not ignored rules',async()=>{
+  const { applyHumanDecisions }=await import('../packages/core/dist/index.js');
+  const { exportContributing }=await import('../packages/exporters/dist/index.js');
+  const fixture=JSON.parse(await readFile(new URL('../fixtures/reviews.json',import.meta.url),'utf8'));
+  const base=discoverRules(fixture,'acme/backend','fixture');
+  const ignored=base.rules[0];
+  const result=applyHumanDecisions(base,{version:1,decisions:[{fingerprint:ignored.fingerprint,action:'ignore'}]}).result;
+  const text=exportContributing(result);
+  assert.ok(!text.includes(ignored.text));
+  assert.match(text,/fingerprint: rdna-/);
+});
