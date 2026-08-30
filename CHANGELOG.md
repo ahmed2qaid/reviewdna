@@ -22,3 +22,8 @@
 - Added `CONTRIBUTING.suggested.md` for recurring undocumented conventions and a neutral `decisions-template` CLI command.
 - Added a local `proposal` command that packages selected conventions, agent/contributor files and source evidence into a review bundle without modifying the target repository or opening a Pull Request.
 - Added an explicit dry-run-first `publish-proposal` workflow. Publishing requires `--apply`, accepts only `reviewdna/*` branches, validates the complete proposal bundle before writes, stores proposal files only under `.reviewdna/proposals/<id>/`, refuses existing proposal branches, creates a single proposal commit, and opens a review Pull Request without overwriting repository policy files.
+- Added evidence dispositions (`accepted`, `adopted`, `acknowledged`, `unresolved`, `rejected-candidate`) with separate positive and negative confidence effects.
+- Added explicit PR-author response inference for accepted/rejected review guidance and deep-evidence checked-state tracking for unresolved comments.
+- Migrated the review cache to schema v2 so legacy cached records without the new evidence signals are recollected once.
+- Added CODEOWNERS-aware evidence weighting with GitHub-style last-match precedence and direct-user matching only; team membership is never guessed.
+- CODEOWNERS metadata is excluded from documentation-drift text matching and surfaced separately in the dashboard alongside evidence dispositions and score effects.
