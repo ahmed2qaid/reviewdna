@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">ReviewDNA engineering knowledge mining showcase</title>
+  <desc id="desc">Synthetic demo preview showing ReviewDNA turning code review history into evidence-backed engineering rules.</desc>
+  <defs>
+    <linearGradient id="accent" x1="0" x2="1"><stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#151925"/><stop offset="1" stop-color="#10141d"/></linearGradient>
+  </defs>
+  <rect width="1200" height="630" rx="28" fill="#0b0d12"/>
+  <rect x="38" y="38" width="1124" height="554" rx="26" fill="url(#panel)" stroke="#2a3140"/>
+  <text x="78" y="105" fill="#aeb7c8" font-family="Inter,Arial,sans-serif" font-size="18" letter-spacing="3">REVIEWDNA · ENGINEERING KNOWLEDGE MINING</text>
+  <text x="78" y="170" fill="#f8fafc" font-family="Inter,Arial,sans-serif" font-size="44" font-weight="700">Turn years of code reviews</text>
+  <text x="78" y="220" fill="#f8fafc" font-family="Inter,Arial,sans-serif" font-size="44" font-weight="700">into evidence-backed engineering rules.</text>
+  <text x="78" y="262" fill="#9aa4b5" font-family="Inter,Arial,sans-serif" font-size="21">For humans, coding agents, contributor docs, and GitHub workflows.</text>
+  <rect x="78" y="298" width="1044" height="7" rx="4" fill="url(#accent)"/>
+  <g transform="translate(78 338)">
+    <rect width="300" height="170" rx="18" fill="#0d1119" stroke="#293142"/>
+    <text x="22" y="38" fill="#9aa4b5" font-family="Inter,Arial,sans-serif" font-size="16">1 · COLLECT</text>
+    <text x="22" y="75" fill="#f8fafc" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="700">GitHub / GitLab reviews</text>
+    <text x="22" y="110" fill="#9aa4b5" font-family="Inter,Arial,sans-serif" font-size="17">Threads · comments · docs</text>
+    <text x="22" y="139" fill="#9aa4b5" font-family="Inter,Arial,sans-serif" font-size="17">CODEOWNERS · history</text>
+  </g>
+  <g transform="translate(450 338)">
+    <rect width="300" height="170" rx="18" fill="#0d1119" stroke="#293142"/>
+    <text x="22" y="38" fill="#9aa4b5" font-family="Inter,Arial,sans-serif" font-size="16">2 · INFER</text>
+    <text x="22" y="75" fill="#f8fafc" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="700">Rules + evidence</text>
+    <text x="22" y="110" fill="#9aa4b5" font-family="Inter,Arial,sans-serif" font-size="17">Confidence · conflicts</text>
+    <text x="22" y="139" fill="#9aa4b5" font-family="Inter,Arial,sans-serif" font-size="17">Drift · evolution · scope</text>
+  </g>
+  <g transform="translate(822 338)">
+    <rect width="300" height="170" rx="18" fill="#0d1119" stroke="#293142"/>
+    <text x="22" y="38" fill="#9aa4b5" font-family="Inter,Arial,sans-serif" font-size="16">3 · SHIP</text>
+    <text x="22" y="75" fill="#f8fafc" font-family="Inter,Arial,sans-serif" font-size="24" font-weight="700">Dashboard + agents</text>
+    <text x="22" y="110" fill="#9aa4b5" font-family="Inter,Arial,sans-serif" font-size="17">AGENTS.md · Claude · Cursor</text>
+    <text x="22" y="139" fill="#9aa4b5" font-family="Inter,Arial,sans-serif" font-size="17">JSON · Action · proposals</text>
+  </g>
+  <text x="78" y="558" fill="#7f8a9c" font-family="Inter,Arial,sans-serif" font-size="15">Synthetic demo preview · no repository policy is modified automatically</text>
+  <text x="1122" y="558" text-anchor="end" fill="#7f8a9c" font-family="Inter,Arial,sans-serif" font-size="15">Local-first · evidence-backed · reviewable</text>
+</svg>
