@@ -7,6 +7,15 @@ export type RuleStatus = 'emerging' | 'established' | 'strong' | 'disputed' | 'd
 export type HumanDecisionAction = 'ignore' | 'promote' | 'override';
 export type EvidenceDisposition = 'accepted' | 'adopted' | 'acknowledged' | 'rejected-candidate' | 'unresolved';
 export type RuleTimelineEventType = 'introduced' | 'reinforced' | 'adopted' | 'rejected-signal' | 'superseded';
+export type DocumentationMatcher = 'lexical' | 'semantic';
+export type DocumentationMatchKind = 'support' | 'conflict';
+
+export interface DocumentationMatch {
+  path: string;
+  kind: DocumentationMatchKind;
+  matcher: DocumentationMatcher;
+  score: number;
+}
 
 export interface RuleTimelineEvent {
   at: string;
@@ -135,6 +144,7 @@ export interface EngineeringRule {
   documented: boolean;
   documentedBy: string[];
   documentationConflicts: string[];
+  documentationEvidence?: DocumentationMatch[] | undefined;
   conflictingRuleIds: string[];
   relationships?: RuleRelationships | undefined;
   timeline?: RuleTimelineEvent[] | undefined;
@@ -188,5 +198,8 @@ export interface AnalysisResult {
     embeddingProvider?: string | undefined;
     semanticThreshold?: number | undefined;
     evolutionModel?: string | undefined;
+    documentationMatcher?: 'lexical' | 'semantic' | undefined;
+    documentationEmbeddingProvider?: string | undefined;
+    documentationSemanticThreshold?: number | undefined;
   };
 }
