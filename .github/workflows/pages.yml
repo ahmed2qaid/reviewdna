@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      pages_ready: ${{ steps.pages.outcome }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,14 +26,39 @@ jobs:
           node-version: '22'
       - run: npm install --ignore-scripts
       - run: npm run demo:site
-      - uses: actions/configure-pages@v5
+      - name: Configure GitHub Pages
+        id: pages
+        continue-on-error: true
+        uses: actions/configure-pages@v5
         with:
           enablement: true
-      - uses: actions/upload-pages-artifact@v3
+      - name: Explain one-time Pages setup
+        if: ${{ steps.pages.outcome != 'success' }}
+        shell: bash
+        run: |
+          echo "::warning::GitHub Pages is not enabled yet. The demo site built successfully, but GitHub requires a repository administrator to enable Pages once in Settings > Pages and select GitHub Actions as the source."
+          {
+            echo "## ReviewDNA demo built successfully"
+            echo
+            echo "GitHub Pages is not enabled for this repository yet."
+            echo "Enable it once in **Settings → Pages → Build and deployment → Source: GitHub Actions**, then re-run this workflow."
+            echo "Until then, the generated _site is uploaded below as a normal workflow artifact."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload Pages artifact
+        if: ${{ steps.pages.outcome == 'success' }}
+        uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+      - name: Upload demo artifact while Pages is disabled
+        if: ${{ steps.pages.outcome != 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: reviewdna-public-demo-site
+          path: _site/
+          if-no-files-found: error
 
   deploy:
+    if: ${{ needs.build.outputs.pages_ready == 'success' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
