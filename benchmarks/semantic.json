@@ -1,0 +1,17 @@
+[
+  {"group":"architecture-database","text":"Database queries should stay in the repository layer instead of controllers."},
+  {"group":"architecture-database","text":"Keep persistence access behind the data access layer and away from HTTP handlers."},
+  {"group":"architecture-database","text":"SQL access belongs in repositories rather than route handlers."},
+
+  {"group":"api-validation","text":"Every API request payload must be validated before calling services."},
+  {"group":"api-validation","text":"Check incoming endpoint input before it reaches the service layer."},
+  {"group":"api-validation","text":"Validate external request parameters at the API boundary before service invocation."},
+
+  {"group":"testing","text":"Behavior changes should include a regression test before merge."},
+  {"group":"testing","text":"Add tests that reproduce the bug whenever behavior is corrected."},
+  {"group":"testing","text":"Require a regression spec for user-visible behavior changes."},
+
+  {"group":"error-handling","text":"Do not swallow exceptions; propagate or handle the error explicitly."},
+  {"group":"error-handling","text":"Errors should be handled explicitly instead of disappearing inside catch blocks."},
+  {"group":"error-handling","text":"Never ignore a failure in a catch path; return or rethrow it deliberately."}
+]
