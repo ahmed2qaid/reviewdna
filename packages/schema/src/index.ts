@@ -24,6 +24,37 @@ export interface DecisionsFile {
   decisions: RuleDecisionInput[];
 }
 
+export interface KnowledgeProposalRule {
+  fingerprint: string;
+  text: string;
+  category: RuleCategory;
+  confidence: number;
+  evidenceCount: number;
+  scope: string[];
+  humanDecision?: HumanDecision | undefined;
+  evidence: Array<{
+    prNumber: number;
+    reviewer: string;
+    createdAt: string;
+    url: string;
+    path?: string | undefined;
+  }>;
+}
+
+export interface KnowledgeProposalManifest {
+  version: 1;
+  repository: string;
+  generatedAt: string;
+  sourceAnalysisGeneratedAt: string;
+  rules: KnowledgeProposalRule[];
+  counts: {
+    includedRules: number;
+    promotedRules: number;
+    overriddenRules: number;
+    evidenceLinks: number;
+  };
+}
+
 export interface ReviewRecord {
   id: string;
   repo: string;
