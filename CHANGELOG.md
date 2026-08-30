@@ -60,3 +60,8 @@
 - Added dashboard Review Hotspots and Automation Opportunities panels plus insight summary metrics.
 - Added a standalone 1200×630 ReviewDNA SVG share-card renderer and a local `Download share card` control embedded in the static report with no backend dependency.
 - Added regression tests for hotspot deduplication, automation classification, insight redaction, dashboard rendering, SVG escaping and local share-card download generation.
+- Added `npm run demo:site`, which rebuilds a complete `_site` from the synthetic review fixture using the real analysis and insight pipeline.
+- Public fixture reports and share cards now carry explicit `Synthetic fixture` / `Synthetic demo` labels instead of language intended for real public-repository analysis.
+- CI now validates the complete Pages site build on Node.js 20, 22 and 24 and includes `_site` in demo artifacts.
+- Added a GitHub Pages workflow that builds the demo from scratch on `main`, uploads a Pages artifact, and deploys without committing generated HTML to the repository.
+- Added `docs/PUBLIC_DEMO.md` and refreshed README documentation for the live-demo path, explicit proposal publishing, semantic intelligence, resumable analysis and current release-focused roadmap.
