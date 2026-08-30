@@ -32,6 +32,34 @@ inputs:
     description: Compare reviewed commits with merged PR heads to strengthen accepted-change evidence (uses more API calls)
     required: false
     default: 'false'
+  clusterer:
+    description: 'Rule clustering mode: deterministic or semantic'
+    required: false
+    default: deterministic
+  semantic-docs:
+    description: Add semantic documentation coverage/drift matching on top of lexical matching
+    required: false
+    default: 'false'
+  embedding-provider:
+    description: 'Embedding provider for semantic clustering/docs: local, ollama, or openai-compatible'
+    required: false
+    default: local
+  embedding-model:
+    description: Embedding model name for model-based providers
+    required: false
+    default: ''
+  embedding-url:
+    description: Base URL for Ollama or OpenAI-compatible embeddings
+    required: false
+    default: ''
+  semantic-threshold:
+    description: Optional semantic clustering similarity threshold
+    required: false
+    default: ''
+  documentation-semantic-threshold:
+    description: Optional semantic documentation similarity threshold
+    required: false
+    default: ''
   fail-on-changes:
     description: In watch mode, return a non-zero status when conventions change
     required: false
@@ -69,16 +97,57 @@ runs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ github.token }}
+        RDNA_REPOSITORY: ${{ inputs.repository }}
+        RDNA_MODE: ${{ inputs.mode }}
+        RDNA_MAX_PRS: ${{ inputs.max-prs }}
+        RDNA_MIN_EVIDENCE: ${{ inputs.min-evidence }}
+        RDNA_OUTPUT: ${{ inputs.output }}
+        RDNA_REDACT: ${{ inputs.redact }}
+        RDNA_USE_CACHE: ${{ inputs.use-cache }}
+        RDNA_DEEP_EVIDENCE: ${{ inputs.deep-evidence }}
+        RDNA_CLUSTERER: ${{ inputs.clusterer }}
+        RDNA_SEMANTIC_DOCS: ${{ inputs.semantic-docs }}
+        RDNA_EMBEDDING_PROVIDER: ${{ inputs.embedding-provider }}
+        RDNA_EMBEDDING_MODEL: ${{ inputs.embedding-model }}
+        RDNA_EMBEDDING_URL: ${{ inputs.embedding-url }}
+        RDNA_SEMANTIC_THRESHOLD: ${{ inputs.semantic-threshold }}
+        RDNA_DOC_SEMANTIC_THRESHOLD: ${{ inputs.documentation-semantic-threshold }}
+        RDNA_FAIL_ON_CHANGES: ${{ inputs.fail-on-changes }}
       run: |
-        EXTRA=""
-        if [ "${{ inputs.redact }}" = "true" ]; then EXTRA="$EXTRA --redact"; fi
-        if [ "${{ inputs.use-cache }}" != "true" ]; then EXTRA="$EXTRA --no-cache"; fi
-        if [ "${{ inputs.deep-evidence }}" = "true" ]; then EXTRA="$EXTRA --deep-evidence"; fi
-        if [ "${{ inputs.fail-on-changes }}" = "true" ]; then EXTRA="$EXTRA --fail-on-changes"; fi
-        if [ "${{ inputs.mode }}" = "watch" ]; then
-          node "${{ github.action_path }}/../apps/cli/dist/index.js" watch "${{ inputs.repository }}" --max-prs "${{ inputs.max-prs }}" --min-evidence "${{ inputs.min-evidence }}" --out "${{ inputs.output }}" --baseline-file ".reviewdna/watch-baseline.json" $EXTRA
+        set -euo pipefail
+        ARGS=(--max-prs "$RDNA_MAX_PRS" --min-evidence "$RDNA_MIN_EVIDENCE" --out "$RDNA_OUTPUT")
+        if [ "$RDNA_REDACT" = "true" ]; then ARGS+=(--redact); fi
+        if [ "$RDNA_USE_CACHE" != "true" ]; then ARGS+=(--no-cache); fi
+        if [ "$RDNA_DEEP_EVIDENCE" = "true" ]; then ARGS+=(--deep-evidence); fi
+        if [ "$RDNA_FAIL_ON_CHANGES" = "true" ]; then ARGS+=(--fail-on-changes); fi
+
+        USE_EMBEDDINGS="false"
+        if [ "$RDNA_CLUSTERER" = "semantic" ]; then
+          ARGS+=(--clusterer semantic)
+          USE_EMBEDDINGS="true"
+        elif [ "$RDNA_CLUSTERER" != "deterministic" ]; then
+          echo "ReviewDNA Action error: clusterer must be deterministic or semantic" >&2
+          exit 1
+        fi
+        if [ "$RDNA_SEMANTIC_DOCS" = "true" ]; then
+          ARGS+=(--semantic-docs)
+          USE_EMBEDDINGS="true"
+        fi
+        if [ "$USE_EMBEDDINGS" = "true" ]; then
+          ARGS+=(--embedding-provider "$RDNA_EMBEDDING_PROVIDER")
+          if [ -n "$RDNA_EMBEDDING_MODEL" ]; then ARGS+=(--embedding-model "$RDNA_EMBEDDING_MODEL"); fi
+          if [ -n "$RDNA_EMBEDDING_URL" ]; then ARGS+=(--embedding-url "$RDNA_EMBEDDING_URL"); fi
+          if [ -n "$RDNA_SEMANTIC_THRESHOLD" ]; then ARGS+=(--semantic-threshold "$RDNA_SEMANTIC_THRESHOLD"); fi
+          if [ -n "$RDNA_DOC_SEMANTIC_THRESHOLD" ]; then ARGS+=(--documentation-semantic-threshold "$RDNA_DOC_SEMANTIC_THRESHOLD"); fi
+        fi
+
+        if [ "$RDNA_MODE" = "watch" ]; then
+          node "${{ github.action_path }}/../apps/cli/dist/index.js" watch "$RDNA_REPOSITORY" "${ARGS[@]}" --baseline-file ".reviewdna/watch-baseline.json"
+        elif [ "$RDNA_MODE" = "analyze" ]; then
+          node "${{ github.action_path }}/../apps/cli/dist/index.js" analyze "$RDNA_REPOSITORY" "${ARGS[@]}"
         else
-          node "${{ github.action_path }}/../apps/cli/dist/index.js" analyze "${{ inputs.repository }}" --max-prs "${{ inputs.max-prs }}" --min-evidence "${{ inputs.min-evidence }}" --out "${{ inputs.output }}" $EXTRA
+          echo "ReviewDNA Action error: mode must be analyze or watch" >&2
+          exit 1
         fi
     - name: Upload ReviewDNA report
       if: ${{ always() }}

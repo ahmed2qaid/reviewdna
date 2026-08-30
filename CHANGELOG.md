@@ -38,3 +38,10 @@
 - Added evidence-derived rule timelines (`introduced`, `reinforced`, `adopted`, `rejected-signal`, `superseded`) with PR/evidence provenance.
 - Watch comparisons now surface parent, child, supersedes, superseded-by, and timeline changes.
 - Dashboard now includes parent/child/superseded metrics, relationship badges, and expandable evolution timelines.
+- Added optional semantic documentation matching on top of lexical coverage/drift using the shared embedding-provider abstraction.
+- Semantic documentation analysis keeps strict polarity separation so semantically close opposite instructions are surfaced as conflicts instead of support.
+- Added auditable `documentationEvidence` entries with source path, support/conflict kind, lexical/semantic matcher, and similarity score; the dashboard exposes these details directly.
+- Added fragment/batch limits, vector-count validation, per-file conflict margins, Watch detection for documentation-evidence changes, and redaction of documentation provenance paths.
+- Added `--semantic-docs` and `--documentation-semantic-threshold` CLI controls independent of semantic rule clustering.
+- Extended the composite GitHub Action with semantic clustering/documentation inputs and hardened user-controlled Action inputs by routing them through environment variables and Bash argument arrays instead of direct shell interpolation.
+- Updated the scheduled fork-ready Watch example to use local semantic documentation matching without an external embedding account.

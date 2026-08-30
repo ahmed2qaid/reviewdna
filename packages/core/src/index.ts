@@ -1,8 +1,8 @@
 export { normalizeReview, classifyReview } from './classification.js';
 export { discoverRules, detectConflicts, deterministicClusters, prepareDiscovery, buildAnalysisFromClusters } from './discovery.js';
 export type { DiscoveryOptions, RejectedReview, PreparedDiscovery, AnalysisBuildMetadata } from './discovery.js';
-export { applyDocumentationCoverage, redactAnalysis } from './documentation.js';
-export type { DocumentationSource, RedactionOptions } from './documentation.js';
+export { applyDocumentationCoverage, applySemanticDocumentationCoverage, redactAnalysis } from './documentation.js';
+export type { DocumentationSource, SemanticDocumentationOptions, RedactionOptions } from './documentation.js';
 export { compareAnalysisResults } from './compare.js';
 export type { AnalysisDelta } from './compare.js';
 export { applyHumanDecisions, decisionTemplate } from './decisions.js';
