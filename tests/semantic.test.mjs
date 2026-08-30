@@ -9,8 +9,8 @@ const record=(id,body,extra={})=>({id,repo:'acme/backend',prNumber:Number(id.rep
 
 test('semantic clustering merges high-similarity paraphrases but respects polarity',async()=>{
   const reviews=[
-    classifyReview(record('1','Database access should stay in the repository layer instead of controllers.')),
-    classifyReview(record('2','Persistence operations should remain behind the data access layer, away from HTTP handlers.')),
+    classifyReview(record('1','Database access should stay in the repository layer.')),
+    classifyReview(record('2','Persistence operations should remain behind the data access layer.')),
     classifyReview(record('3','Database access should never stay in the repository layer.'))
   ];
   const vectors=new Map([
@@ -27,8 +27,8 @@ test('semantic clustering merges high-similarity paraphrases but respects polari
 
 test('semantic discovery reuses the normal evidence/confidence pipeline',async()=>{
   const records=[
-    record('1','Database access should stay in the repository layer instead of controllers.'),
-    record('2','Persistence operations should remain behind the data access layer, away from HTTP handlers.')
+    record('1','Database access should stay in the repository layer.'),
+    record('2','Persistence operations should remain behind the data access layer.')
   ];
   const provider={name:'fixture-embedding',recommendedThreshold:.8,async embed(){return [[1,0,0],[.99,.01,0]];}};
   const result=await discoverRulesSemantic(records,'acme/backend','fixture',provider,{minEvidence:2,threshold:.8});
