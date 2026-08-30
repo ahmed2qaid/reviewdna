@@ -27,3 +27,8 @@
 - Migrated the review cache to schema v2 so legacy cached records without the new evidence signals are recollected once.
 - Added CODEOWNERS-aware evidence weighting with GitHub-style last-match precedence and direct-user matching only; team membership is never guessed.
 - CODEOWNERS metadata is excluded from documentation-drift text matching and surfaced separately in the dashboard alongside evidence dispositions and score effects.
+- Added a provider-neutral embedding interface and deterministic `local-feature-v1` embedding provider.
+- Added guarded semantic clustering with category/polarity partitions, centroid similarity and a complete-link floor so embeddings group existing evidence without creating rules.
+- Added Ollama `/api/embed` and OpenAI-compatible `/embeddings` providers, with embedding configuration separated from optional wording refinement.
+- Added CLI controls for deterministic/semantic clustering, embedding provider/model/endpoint and semantic threshold.
+- Added auditable clusterer/provider/threshold metadata to `reviewdna.json` plus semantic unit tests and a labeled paraphrase regression benchmark.
