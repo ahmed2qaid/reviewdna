@@ -23,6 +23,7 @@ jobs:
       - run: npm test
       - run: npm run benchmark
       - run: npm run demo:site
+      - run: npm run docs:verify
       - run: npm run example:programmatic
       - run: npm run example:plugin
       - run: npm run release:verify
@@ -32,6 +33,7 @@ jobs:
           path: |
             demo-output/
             _site/
+            _docs/
             example-output/
             plugin-example-output/
 
