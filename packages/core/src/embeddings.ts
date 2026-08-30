@@ -2,6 +2,7 @@ import { tokens } from './text.js';
 
 export interface EmbeddingProvider {
   readonly name: string;
+  readonly recommendedThreshold?: number | undefined;
   embed(texts:string[]):Promise<number[][]>;
 }
 
@@ -57,6 +58,7 @@ function normalized(vector:number[]):number[]{
 
 export class LocalFeatureEmbeddingProvider implements EmbeddingProvider{
   readonly name='local-feature-v1';
+  readonly recommendedThreshold=.28;
   private readonly dimensions:number;
   constructor(options:LocalFeatureEmbeddingOptions={}){this.dimensions=Math.max(64,Math.min(2048,options.dimensions??384));}
   async embed(texts:string[]):Promise<number[][]>{
