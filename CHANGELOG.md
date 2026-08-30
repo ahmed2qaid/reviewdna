@@ -45,3 +45,11 @@
 - Added `--semantic-docs` and `--documentation-semantic-threshold` CLI controls independent of semantic rule clustering.
 - Extended the composite GitHub Action with semantic clustering/documentation inputs and hardened user-controlled Action inputs by routing them through environment variables and Bash argument arrays instead of direct shell interpolation.
 - Updated the scheduled fork-ready Watch example to use local semantic documentation matching without an external embedding account.
+- Added stable content/input/options hashing and a versioned pipeline checkpoint contract for safe resumable analysis.
+- Added `--resume`, `--checkpoint-file`, and `--no-checkpoint`; checkpoints are reused only when repository, content and option identities match.
+- Added heuristic token estimation and user-priced cost preflight for optional embedding and wording-refinement stages, with machine-readable `reviewdna-cost.json` output.
+- Added an aggregate `--max-remote-cost-usd` guard that blocks a remote stage before its request when the estimate exceeds budget or required price inputs are missing.
+- Added `--redact-sensitive` to selectively scrub common email, access-token, API-key, JWT, Bearer credential and international-phone patterns while preserving surrounding prose.
+- Expanded sensitive redaction across rule/evidence/reviewer/path/URL/human-decision/rejected-review text and automatically disabled raw caches/checkpoints whenever redaction is active.
+- Added GitHub Action inputs for resume/checkpoints, sensitive redaction, cost estimates, user-supplied pricing and remote-budget enforcement; the scheduled Watch example now restores and resumes validated checkpoints.
+- Added regression tests for stable content identity, checkpoint compatibility, cache schema behavior, cost-budget enforcement and targeted sensitive redaction.
