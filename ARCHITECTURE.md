@@ -9,6 +9,7 @@
 5. **Untrusted input.** Repository and review content is data; it can contain prompt injection or hostile HTML.
 6. **Machine readable.** `reviewdna.json` is a first-class product surface.
 7. **Auditable transformation.** Human overrides preserve original inferred wording, evidence and confidence instead of erasing provenance.
+8. **Review before mutation.** Policy outputs are packaged locally before any future GitHub write action is allowed.
 
 ## Pipeline
 
@@ -58,8 +59,18 @@ AnalysisResult schema v1.0
   ├── AGENTS / Claude / Cursor suggestions
   ├── CONTRIBUTING suggestions
   ├── Interactive static HTML
-  └── Watch delta / history snapshots
+  ├── Watch delta / history snapshots
+  └── Local Knowledge Proposal package
+       ├── reviewdna-proposal.json
+       ├── REVIEWDNA_PROPOSAL.md
+       └── proposed policy files
 ```
+
+## Knowledge Proposal boundary
+
+The `proposal` command converts the already-reviewed `AnalysisResult` into a local bundle. Its manifest contains the exact rule fingerprints, policy-selection outcome, scopes, confidence values and evidence URLs used to create the proposed policy files. This gives a future PR publisher a deterministic input that can be audited independently of the historical mining step.
+
+Creating a Knowledge Proposal does **not** modify the target repository and does not call a GitHub write API. Future PR publishing will be an explicit, separately permissioned layer built on top of this bundle.
 
 ## Confidence model v0.1
 
