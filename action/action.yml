@@ -33,7 +33,7 @@ inputs:
     required: false
     default: 'false'
   clusterer:
-    description: Rule clustering mode: deterministic or semantic
+    description: 'Rule clustering mode: deterministic or semantic'
     required: false
     default: deterministic
   semantic-docs:
@@ -41,7 +41,7 @@ inputs:
     required: false
     default: 'false'
   embedding-provider:
-    description: Embedding provider for semantic clustering/docs: local, ollama, or openai-compatible
+    description: 'Embedding provider for semantic clustering/docs: local, ollama, or openai-compatible'
     required: false
     default: local
   embedding-model:
