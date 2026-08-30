@@ -1,6 +1,7 @@
 import type { AnalysisResult, DocumentationMatch } from '@reviewdna/schema';
 import { applyCodeOwnerEvidence } from './codeowners.js';
 import { cosineSimilarity, type EmbeddingProvider } from './embeddings.js';
+import { redactSensitiveText } from './sensitive.js';
 import { conceptSimilarity, negativePolarity } from './text.js';
 
 export interface DocumentationSource{path:string;content:string;}
@@ -79,6 +80,16 @@ export async function applySemanticDocumentationCoverage(result:AnalysisResult,s
   return result;
 }
 
-export interface RedactionOptions{reviewers?:boolean;paths?:boolean;evidenceBodies?:boolean;}
+export interface RedactionOptions{reviewers?:boolean;paths?:boolean;evidenceBodies?:boolean;sensitiveText?:boolean;}
 function alias(input:string){let hash=2166136261;for(let i=0;i<input.length;i++){hash^=input.charCodeAt(i);hash=Math.imul(hash,16777619);}return`reviewer-${(hash>>>0).toString(36).slice(0,6)}`;}
-export function redactAnalysis(input:AnalysisResult,options:RedactionOptions={reviewers:true,paths:true,evidenceBodies:false}):AnalysisResult{const result=JSON.parse(JSON.stringify(input)) as AnalysisResult;for(const rule of result.rules){if(options.paths){rule.scope=rule.scope.map(()=>'[redacted-scope]');rule.documentedBy=rule.documentedBy.map(()=>'[redacted-document]');rule.documentationConflicts=rule.documentationConflicts.map(()=>'[redacted-document]');if(rule.documentationEvidence)rule.documentationEvidence=rule.documentationEvidence.map(match=>({...match,path:'[redacted-document]'}));}for(const e of rule.evidence){if(options.reviewers)e.reviewer=alias(e.reviewer);if(options.paths&&e.path)e.path='[redacted-path]';if(options.evidenceBodies)e.body='[redacted review text]';}}result.metadata.redacted=true;return result;}
+export function redactAnalysis(input:AnalysisResult,options:RedactionOptions={reviewers:true,paths:true,evidenceBodies:false,sensitiveText:false}):AnalysisResult{
+  const result=JSON.parse(JSON.stringify(input)) as AnalysisResult;let sensitiveRedactions=0;
+  const scrub=(text:string|undefined)=>{if(text===undefined||!options.sensitiveText)return text;const redacted=redactSensitiveText(text);sensitiveRedactions+=redacted.replacements;return redacted.text;};
+  for(const rule of result.rules){
+    if(options.sensitiveText){rule.text=scrub(rule.text)??rule.text;if(rule.originalText!==undefined)rule.originalText=scrub(rule.originalText);if(rule.humanDecision?.reason!==undefined)rule.humanDecision.reason=scrub(rule.humanDecision.reason);if(rule.humanDecision?.overrideText!==undefined)rule.humanDecision.overrideText=scrub(rule.humanDecision.overrideText);}
+    if(options.paths){rule.scope=rule.scope.map(()=>'[redacted-scope]');rule.documentedBy=rule.documentedBy.map(()=>'[redacted-document]');rule.documentationConflicts=rule.documentationConflicts.map(()=>'[redacted-document]');if(rule.documentationEvidence)rule.documentationEvidence=rule.documentationEvidence.map(match=>({...match,path:'[redacted-document]'}));}
+    for(const e of rule.evidence){if(options.reviewers)e.reviewer=alias(e.reviewer);if(options.paths&&e.path)e.path='[redacted-path]';if(options.evidenceBodies)e.body='[redacted review text]';else if(options.sensitiveText)e.body=scrub(e.body)??e.body;}
+  }
+  if(options.sensitiveText){for(const rejected of result.rejected)rejected.body=scrub(rejected.body)??rejected.body;result.metadata.sensitiveRedactions=sensitiveRedactions;}
+  result.metadata.redacted=true;return result;
+}
