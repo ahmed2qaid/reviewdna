@@ -2,6 +2,7 @@ node_modules/
 dist/
 reviewdna-output/
 demo-output/
+example-output/
 .env
 .env.*
 !.env.example
