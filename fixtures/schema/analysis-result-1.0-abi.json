@@ -1,0 +1,25 @@
+{
+  "$id": "https://reviewdna.dev/schema/analysis-result-1.0.json",
+  "topLevelRequired": ["schemaVersion", "summary", "rules", "rejected", "metadata"],
+  "definitions": {
+    "RuleCategory": {"enum": ["architecture", "security", "testing", "performance", "api-design", "naming", "maintainability", "error-handling", "documentation", "dependency", "style", "general"]},
+    "RuleStatus": {"enum": ["emerging", "established", "strong", "disputed", "declining", "stale", "superseded"]},
+    "EvidenceDisposition": {"enum": ["accepted", "adopted", "acknowledged", "rejected-candidate", "unresolved"]},
+    "EngineeringRule": {
+      "required": ["id", "fingerprint", "text", "category", "status", "confidence", "evidenceCount", "reviewerCount", "firstSeen", "lastSeen", "scope", "documented", "documentedBy", "documentationConflicts", "conflictingRuleIds", "evidence", "scoreBreakdown"],
+      "properties": ["id", "fingerprint", "text", "originalText", "humanDecision", "category", "status", "confidence", "evidenceCount", "reviewerCount", "firstSeen", "lastSeen", "scope", "documented", "documentedBy", "documentationConflicts", "documentationEvidence", "conflictingRuleIds", "relationships", "timeline", "evidence", "scoreBreakdown"]
+    },
+    "RuleEvidence": {
+      "required": ["id", "prNumber", "reviewer", "createdAt", "url", "body"],
+      "properties": ["id", "prNumber", "reviewer", "createdAt", "url", "body", "path", "accepted", "resolved", "changedAfterReview", "deepEvidenceChecked", "explicitResponse", "disposition", "codeOwner"]
+    },
+    "AnalysisSummary": {
+      "required": ["repository", "generatedAt", "reviewsAnalyzed", "pullRequests", "reviewers", "rules", "highConfidenceRules", "emergingRules", "conflictingRules", "staleRules", "undocumentedRules", "documentationCoverage", "documentationDrift", "categoryCounts"],
+      "properties": ["repository", "generatedAt", "reviewsAnalyzed", "pullRequests", "reviewers", "rules", "highConfidenceRules", "emergingRules", "conflictingRules", "staleRules", "undocumentedRules", "documentationCoverage", "documentationDrift", "parentRules", "childRules", "supersededRules", "categoryCounts"]
+    },
+    "AnalysisMetadata": {
+      "required": ["engineVersion", "mode", "source"],
+      "properties": ["engineVersion", "mode", "source", "redacted", "sensitiveRedactions", "resumedFromCheckpoint", "provider", "refinedRules", "clusterer", "embeddingProvider", "semanticThreshold", "evolutionModel", "documentationMatcher", "documentationEmbeddingProvider", "documentationSemanticThreshold", "insightsModel"]
+    }
+  }
+}

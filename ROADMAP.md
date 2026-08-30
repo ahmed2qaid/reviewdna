@@ -88,10 +88,10 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ GitLab collector prototype with plugin adapter, offline tests and self-hosted support
 
 ## 0.9 — Hardening
-- large-repository benchmarks
-- security audit and fuzz tests
-- schema compatibility suite
-- Windows/macOS/Linux E2E
+- ✅ reproducible 10k-review large-repository benchmark with machine-readable metrics and catastrophic-regression guards
+- ✅ internal security audit plus deterministic fuzz, redaction and report-escaping tests
+- ✅ AnalysisResult 1.0 schema ABI and fingerprint compatibility suite
+- ✅ Windows/macOS/Linux CLI E2E on GitHub-hosted runners
 - docs site and migration guides
 
 ## 1.0 — Stable

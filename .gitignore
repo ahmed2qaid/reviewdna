@@ -3,6 +3,9 @@ dist/
 reviewdna-output/
 demo-output/
 example-output/
+plugin-example-output/
+e2e-output/
+benchmark-output/
 .env
 .env.*
 !.env.example
