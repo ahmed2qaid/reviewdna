@@ -51,8 +51,9 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ richer lifecycle/scope/documentation delta classification
 - ✅ cached scheduled Watch workflow example for fork-based deployments
 - ✅ tracked human `review` / `ignore` / `promote` / `override` decision file
+- ✅ local evidence-backed Knowledge Proposal review bundle
 - GitHub Pages report deployment
-- evidence-backed knowledge pull requests
+- explicit GitHub publishing of approved Knowledge Proposals as Pull Requests
 
 ## 0.7 — Rich dashboard
 - ✅ rule explorer with filters/evidence expansion
