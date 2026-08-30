@@ -12,12 +12,13 @@ The target is a production-quality v1.0, not a toy demo.
 
 ## 0.2 — Evidence quality
 - ✅ review-thread resolution collection with authenticated GraphQL
-- ✅ baseline before/after commit comparison for resolved inline comments
-- ✅ weighted evidence: explicit acceptance > resolved + same-file post-review change > resolved-only
-- rejected suggestion inference
-- CODEOWNERS-aware evidence weighting
+- ✅ baseline before/after commit comparison for inline comments
+- ✅ evidence dispositions: accepted / adopted / acknowledged / unresolved / rejected-candidate
+- ✅ conservative rejected-candidate inference from explicit PR-author replies and checked-but-unchanged deep evidence
+- ✅ CODEOWNERS-aware direct-reviewer evidence weighting without team-membership guessing
 - ✅ bot filtering and minimum-evidence promotion
 - ✅ synthetic precision/recall/category regression benchmark
+- stronger causal rejection/adoption inference from richer review-thread history
 - real-world labeled benchmark calibration
 
 ## 0.3 — Semantic intelligence
@@ -59,6 +60,7 @@ The target is a production-quality v1.0, not a toy demo.
 ## 0.7 — Rich dashboard
 - ✅ rule explorer with filters/evidence expansion
 - ✅ display rule fingerprints and human decisions
+- ✅ display evidence dispositions, CODEOWNER signals and score effects
 - review heatmap
 - ✅ documentation coverage/drift
 - ✅ CLI snapshot compare
