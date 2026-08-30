@@ -72,12 +72,13 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ rule explorer with filters/evidence expansion
 - ✅ display rule fingerprints and human decisions
 - ✅ display evidence dispositions, CODEOWNER signals and score effects
-- review heatmap
+- ✅ review hotspots with evidence deduplication, percentages and category distribution
 - ✅ documentation coverage/drift
 - ✅ display documentation support/conflict provenance and matcher scores
 - ✅ CLI snapshot compare
 - ✅ relationship badges and expandable rule evolution timelines
-- automation opportunities and exportable share cards
+- ✅ deterministic automation opportunities with suggested enforcement mechanisms
+- ✅ exportable 1200×630 SVG share card with local dashboard download
 
 ## 0.8 — Ecosystem
 - plugin interfaces for collectors/providers/exporters/scorers
