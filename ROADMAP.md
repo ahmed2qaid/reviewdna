@@ -92,7 +92,7 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ internal security audit plus deterministic fuzz, redaction and report-escaping tests
 - ✅ AnalysisResult 1.0 schema ABI and fingerprint compatibility suite
 - ✅ Windows/macOS/Linux CLI E2E on GitHub-hosted runners
-- docs site and migration guides
+- ✅ generated static docs site, searchable Pages bundle and pre-v1 migration guide
 
 ## 1.0 — Stable
 - calibrated evidence/confidence model
