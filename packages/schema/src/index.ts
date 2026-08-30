@@ -6,6 +6,22 @@ export type RuleCategory =
 export type RuleStatus = 'emerging' | 'established' | 'strong' | 'disputed' | 'declining' | 'stale' | 'superseded';
 export type HumanDecisionAction = 'ignore' | 'promote' | 'override';
 export type EvidenceDisposition = 'accepted' | 'adopted' | 'acknowledged' | 'rejected-candidate' | 'unresolved';
+export type RuleTimelineEventType = 'introduced' | 'reinforced' | 'adopted' | 'rejected-signal' | 'superseded';
+
+export interface RuleTimelineEvent {
+  at: string;
+  type: RuleTimelineEventType;
+  evidenceId?: string | undefined;
+  prNumber?: number | undefined;
+  relatedFingerprint?: string | undefined;
+}
+
+export interface RuleRelationships {
+  parentFingerprint?: string | undefined;
+  childFingerprints: string[];
+  supersedesFingerprints: string[];
+  supersededByFingerprint?: string | undefined;
+}
 
 export interface HumanDecision {
   action: HumanDecisionAction;
@@ -120,6 +136,8 @@ export interface EngineeringRule {
   documentedBy: string[];
   documentationConflicts: string[];
   conflictingRuleIds: string[];
+  relationships?: RuleRelationships | undefined;
+  timeline?: RuleTimelineEvent[] | undefined;
   evidence: RuleEvidence[];
   scoreBreakdown: {
     frequency: number;
@@ -148,6 +166,9 @@ export interface AnalysisSummary {
   undocumentedRules: number;
   documentationCoverage: number;
   documentationDrift: number;
+  parentRules?: number | undefined;
+  childRules?: number | undefined;
+  supersededRules?: number | undefined;
   categoryCounts: Record<string, number>;
 }
 
@@ -166,5 +187,6 @@ export interface AnalysisResult {
     clusterer?: 'deterministic' | 'semantic' | undefined;
     embeddingProvider?: string | undefined;
     semanticThreshold?: number | undefined;
+    evolutionModel?: string | undefined;
   };
 }
