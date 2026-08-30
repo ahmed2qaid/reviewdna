@@ -14,6 +14,8 @@ export interface AnalysisDelta {
 function sameStrings(a:string[],b:string[]):boolean {
   return a.length===b.length && [...a].sort().every((v,i)=>v===[...b].sort()[i]);
 }
+function relationshipStrings(rule:EngineeringRule,key:'childFingerprints'|'supersedesFingerprints'):string[]{return rule.relationships?.[key]??[];}
+function timelineSignature(rule:EngineeringRule):string[]{return (rule.timeline??[]).map(event=>`${event.at}|${event.type}|${event.relatedFingerprint??''}|${event.evidenceId??''}`);}
 
 export function compareAnalysisResults(before:AnalysisResult,after:AnalysisResult):AnalysisDelta {
   const used=new Set<string>(),pairs:RulePair[]=[];
@@ -35,6 +37,11 @@ export function compareAnalysisResults(before:AnalysisResult,after:AnalysisResul
     if(p.before.evidenceCount!==p.after.evidenceCount)changes.push(`evidence:${p.before.evidenceCount}->${p.after.evidenceCount}`);
     if(p.before.reviewerCount!==p.after.reviewerCount)changes.push(`reviewers:${p.before.reviewerCount}->${p.after.reviewerCount}`);
     if(!sameStrings(p.before.scope,p.after.scope))changes.push('scope');
+    if((p.before.relationships?.parentFingerprint??'none')!==(p.after.relationships?.parentFingerprint??'none'))changes.push('parent-rule');
+    if(!sameStrings(relationshipStrings(p.before,'childFingerprints'),relationshipStrings(p.after,'childFingerprints')))changes.push('child-rules');
+    if((p.before.relationships?.supersededByFingerprint??'none')!==(p.after.relationships?.supersededByFingerprint??'none'))changes.push('superseded-by');
+    if(!sameStrings(relationshipStrings(p.before,'supersedesFingerprints'),relationshipStrings(p.after,'supersedesFingerprints')))changes.push('supersedes');
+    if(!sameStrings(timelineSignature(p.before),timelineSignature(p.after)))changes.push('timeline');
     if((p.before.humanDecision?.action??'none')!==(p.after.humanDecision?.action??'none'))changes.push(`human-decision:${p.before.humanDecision?.action??'none'}->${p.after.humanDecision?.action??'none'}`);
     if(p.before.text!==p.after.text&&(p.before.humanDecision?.action==='override'||p.after.humanDecision?.action==='override'))changes.push('human-override-text');
     return {...p,changes};
