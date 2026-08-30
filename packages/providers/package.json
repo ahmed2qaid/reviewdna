@@ -1,1 +1,1 @@
-{"name":"@reviewdna/providers","version":"0.1.0","type":"module","main":"dist/index.js","types":"dist/index.d.ts","exports":"./dist/index.js","dependencies":{"@reviewdna/schema":"0.1.0","@reviewdna/core":"0.1.0"}}
+{"name":"@reviewdna/providers","version":"0.2.0","type":"module","main":"dist/index.js","types":"dist/index.d.ts","exports":"./dist/index.js","dependencies":{"@reviewdna/schema":"0.2.0","@reviewdna/core":"0.2.0"}}
