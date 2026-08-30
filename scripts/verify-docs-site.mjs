@@ -31,6 +31,6 @@ assert.equal(migration.includes('<script>alert('), false);
 const docsHome = await readFile('_site/docs/index.html', 'utf8');
 assert.ok(docsHome.includes('ReviewDNA Docs'));
 assert.ok(docsHome.includes('Filter documentation'));
-assert.ok(docsHome.includes('search-index'));
+assert.ok(docsHome.includes('const INDEX='));
 
 console.log(`ReviewDNA docs site verification passed with ${index.length} indexed pages.`);
