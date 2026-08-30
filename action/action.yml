@@ -24,8 +24,20 @@ inputs:
     description: Pseudonymize reviewer names and paths in generated artifacts
     required: false
     default: 'false'
+  redact-sensitive:
+    description: Selectively scrub common secrets and PII while preserving surrounding prose
+    required: false
+    default: 'false'
   use-cache:
     description: Reuse PR collection data and watch baselines across workflow runs
+    required: false
+    default: 'true'
+  resume:
+    description: Reuse a matching persisted pipeline checkpoint when available
+    required: false
+    default: 'false'
+  use-checkpoints:
+    description: Persist resumable pipeline checkpoints when raw persistence is allowed
     required: false
     default: 'true'
   deep-evidence:
@@ -58,6 +70,26 @@ inputs:
     default: ''
   documentation-semantic-threshold:
     description: Optional semantic documentation similarity threshold
+    required: false
+    default: ''
+  estimate-cost:
+    description: Emit token and user-priced cost estimates for optional AI stages
+    required: false
+    default: 'false'
+  embedding-input-price-per-million:
+    description: User-supplied embedding input price per one million tokens
+    required: false
+    default: ''
+  llm-input-price-per-million:
+    description: User-supplied LLM input price per one million tokens
+    required: false
+    default: ''
+  llm-output-price-per-million:
+    description: User-supplied LLM output price per one million tokens
+    required: false
+    default: ''
+  max-remote-cost-usd:
+    description: Maximum estimated aggregate cost allowed before remote stages execute
     required: false
     default: ''
   fail-on-changes:
@@ -103,7 +135,10 @@ runs:
         RDNA_MIN_EVIDENCE: ${{ inputs.min-evidence }}
         RDNA_OUTPUT: ${{ inputs.output }}
         RDNA_REDACT: ${{ inputs.redact }}
+        RDNA_REDACT_SENSITIVE: ${{ inputs.redact-sensitive }}
         RDNA_USE_CACHE: ${{ inputs.use-cache }}
+        RDNA_RESUME: ${{ inputs.resume }}
+        RDNA_USE_CHECKPOINTS: ${{ inputs.use-checkpoints }}
         RDNA_DEEP_EVIDENCE: ${{ inputs.deep-evidence }}
         RDNA_CLUSTERER: ${{ inputs.clusterer }}
         RDNA_SEMANTIC_DOCS: ${{ inputs.semantic-docs }}
@@ -112,14 +147,27 @@ runs:
         RDNA_EMBEDDING_URL: ${{ inputs.embedding-url }}
         RDNA_SEMANTIC_THRESHOLD: ${{ inputs.semantic-threshold }}
         RDNA_DOC_SEMANTIC_THRESHOLD: ${{ inputs.documentation-semantic-threshold }}
+        RDNA_ESTIMATE_COST: ${{ inputs.estimate-cost }}
+        RDNA_EMBEDDING_INPUT_PRICE: ${{ inputs.embedding-input-price-per-million }}
+        RDNA_LLM_INPUT_PRICE: ${{ inputs.llm-input-price-per-million }}
+        RDNA_LLM_OUTPUT_PRICE: ${{ inputs.llm-output-price-per-million }}
+        RDNA_MAX_REMOTE_COST: ${{ inputs.max-remote-cost-usd }}
         RDNA_FAIL_ON_CHANGES: ${{ inputs.fail-on-changes }}
       run: |
         set -euo pipefail
         ARGS=(--max-prs "$RDNA_MAX_PRS" --min-evidence "$RDNA_MIN_EVIDENCE" --out "$RDNA_OUTPUT")
         if [ "$RDNA_REDACT" = "true" ]; then ARGS+=(--redact); fi
+        if [ "$RDNA_REDACT_SENSITIVE" = "true" ]; then ARGS+=(--redact-sensitive); fi
         if [ "$RDNA_USE_CACHE" != "true" ]; then ARGS+=(--no-cache); fi
+        if [ "$RDNA_RESUME" = "true" ]; then ARGS+=(--resume); fi
+        if [ "$RDNA_USE_CHECKPOINTS" != "true" ]; then ARGS+=(--no-checkpoint); fi
         if [ "$RDNA_DEEP_EVIDENCE" = "true" ]; then ARGS+=(--deep-evidence); fi
         if [ "$RDNA_FAIL_ON_CHANGES" = "true" ]; then ARGS+=(--fail-on-changes); fi
+        if [ "$RDNA_ESTIMATE_COST" = "true" ]; then ARGS+=(--estimate-cost); fi
+        if [ -n "$RDNA_EMBEDDING_INPUT_PRICE" ]; then ARGS+=(--embedding-input-price-per-million "$RDNA_EMBEDDING_INPUT_PRICE"); fi
+        if [ -n "$RDNA_LLM_INPUT_PRICE" ]; then ARGS+=(--llm-input-price-per-million "$RDNA_LLM_INPUT_PRICE"); fi
+        if [ -n "$RDNA_LLM_OUTPUT_PRICE" ]; then ARGS+=(--llm-output-price-per-million "$RDNA_LLM_OUTPUT_PRICE"); fi
+        if [ -n "$RDNA_MAX_REMOTE_COST" ]; then ARGS+=(--max-remote-cost-usd "$RDNA_MAX_REMOTE_COST"); fi
 
         USE_EMBEDDINGS="false"
         if [ "$RDNA_CLUSTERER" = "semantic" ]; then
