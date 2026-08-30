@@ -81,7 +81,7 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ exportable 1200×630 SVG share card with local dashboard download
 
 ## 0.8 — Ecosystem
-- plugin interfaces for collectors/providers/exporters/scorers
+- ✅ versioned plugin interfaces for collectors/providers/exporters/scorers with registry, validation, docs and executable example
 - ✅ Dockerfile and CI smoke build
 - published Docker image
 - ✅ public JSON Schema package contract and executable programmatic API examples

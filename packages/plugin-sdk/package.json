@@ -1,0 +1,11 @@
+{
+  "name": "@reviewdna/plugin-sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": "./dist/index.js",
+  "dependencies": {
+    "@reviewdna/schema": "0.1.0"
+  }
+}
