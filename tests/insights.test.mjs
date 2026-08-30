@@ -39,12 +39,14 @@ test('insight paths and scopes obey the existing redaction policy',()=>{
   assert.ok(result.insights.automationOpportunities.every(item=>item.scope.every(scope=>scope==='[redacted-scope]')));
 });
 
-test('dashboard renders hotspots and automation candidates from structured insights',()=>{
+test('dashboard renders hotspots, automation candidates and a local share-card download',()=>{
   const html=renderHtml(applyAnalysisInsights(analysis()));
   assert.match(html,/Review Hotspots/);
   assert.match(html,/packages\/core/);
   assert.match(html,/Automation Opportunities/);
   assert.match(html,/security-scan/);
+  assert.match(html,/download="reviewdna-share-card\.svg"/);
+  assert.match(html,/data:image\/svg\+xml/);
 });
 
 test('share card renderer produces a standalone escaped SVG summary',()=>{
