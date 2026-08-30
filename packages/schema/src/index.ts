@@ -192,6 +192,8 @@ export interface AnalysisResult {
     mode: 'deterministic' | 'hybrid' | 'llm';
     source: 'github' | 'fixture';
     redacted?: boolean | undefined;
+    sensitiveRedactions?: number | undefined;
+    resumedFromCheckpoint?: string | undefined;
     provider?: string | undefined;
     refinedRules?: number | undefined;
     clusterer?: 'deterministic' | 'semantic' | undefined;
