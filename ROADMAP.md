@@ -52,8 +52,9 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ cached scheduled Watch workflow example for fork-based deployments
 - ✅ tracked human `review` / `ignore` / `promote` / `override` decision file
 - ✅ local evidence-backed Knowledge Proposal review bundle
+- ✅ explicit dry-run-first GitHub publishing of Knowledge Proposals as review Pull Requests
 - GitHub Pages report deployment
-- explicit GitHub publishing of approved Knowledge Proposals as Pull Requests
+- end-to-end Knowledge Proposal PR demo on a public repository
 
 ## 0.7 — Rich dashboard
 - ✅ rule explorer with filters/evidence expansion
