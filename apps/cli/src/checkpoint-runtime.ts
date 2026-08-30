@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import {
-  analysisInputHash, checkpointStageAtLeast, createPipelineCheckpoint, pipelineOptionsHash,
+  analysisInputHash, applyAnalysisInsights, checkpointStageAtLeast, createPipelineCheckpoint, pipelineOptionsHash,
   validPipelineCheckpoint, type DocumentationSource, type PipelineCheckpoint, type PipelineCheckpointStage
 } from '@reviewdna/core';
 import type { AnalysisResult, ReviewRecord } from '@reviewdna/schema';
@@ -53,6 +53,7 @@ export async function runCheckpointedPipeline(options:CheckpointPipelineOptions)
   if(!(checkpoint&&checkpointStageAtLeast(checkpoint.stage,'refinement'))){result=await options.steps.refinement(result);await save('refinement',result);}
   if(!(checkpoint&&checkpointStageAtLeast(checkpoint.stage,'decisions'))){result=await options.steps.decisions(result);await save('decisions',result);}
 
+  result=applyAnalysisInsights(result);
   if(resumedFrom)result.metadata.resumedFromCheckpoint=resumedFrom;
   await save('final',result);
   return{result,inputHash,optionsHash,...(resumedFrom?{resumedFrom}:{})};
