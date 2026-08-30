@@ -5,6 +5,7 @@
     {"path":"packages/plugin-sdk"},
     {"path":"packages/core"},
     {"path":"packages/github"},
+    {"path":"packages/gitlab"},
     {"path":"packages/providers"},
     {"path":"packages/exporters"},
     {"path":"packages/report"},
