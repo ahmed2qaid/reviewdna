@@ -29,8 +29,8 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ guarded semantic clustering beyond token overlap
 - ✅ separate embedding-provider and wording-provider CLI controls
 - ✅ semantic regression benchmark and auditable clusterer metadata
-- parent/sub-rule relationships
-- superseded-rule detection and rule evolution timeline
+- ✅ parent/sub-rule relationships
+- ✅ conservative superseded-rule detection and evidence-derived rule evolution timeline
 - real-world semantic-clustering threshold calibration
 
 ## 0.4 — Documentation drift
@@ -68,7 +68,7 @@ The target is a production-quality v1.0, not a toy demo.
 - review heatmap
 - ✅ documentation coverage/drift
 - ✅ CLI snapshot compare
-- richer visual rule timeline
+- ✅ relationship badges and expandable rule evolution timelines
 - automation opportunities and exportable share cards
 
 ## 0.8 — Ecosystem
