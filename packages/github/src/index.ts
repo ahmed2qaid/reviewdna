@@ -1,4 +1,5 @@
 import type { ReviewRecord } from '@reviewdna/schema';
+import { inferAuthorReviewResponses } from './review-signals.js';
 
 export interface GitHubCollectorOptions {
   token?: string | undefined;
@@ -8,10 +9,10 @@ export interface GitHubCollectorOptions {
   deepEvidence?: boolean | undefined;
   maxDeepComparisonsPerPullRequest?: number | undefined;
 }
-export interface GitHubCollectionState { schemaVersion:1; repository:string; generatedAt:string; prUpdatedAt:Record<string,string>; records:ReviewRecord[]; }
+export interface GitHubCollectionState { schemaVersion:1|2; repository:string; generatedAt:string; prUpdatedAt:Record<string,string>; records:ReviewRecord[]; }
 export interface GitHubCollectionResult { records:ReviewRecord[]; state:GitHubCollectionState; stats:{pullRequests:number;fetchedPullRequests:number;cachedPullRequests:number;deepComparisons:number}; }
 interface GitHubPR { number:number; title:string; html_url:string; user?:{login?:string}; merged_at?:string|null; updated_at:string; head?:{sha?:string}; }
-interface GHReviewComment { id:number; body?:string; html_url:string; user?:{login?:string}; created_at:string; path?:string; commit_id?:string; original_commit_id?:string; }
+interface GHReviewComment { id:number; body?:string; html_url:string; user?:{login?:string}; created_at:string; path?:string; commit_id?:string; original_commit_id?:string; in_reply_to_id?:number; }
 interface GHIssueComment { id:number; body?:string; html_url:string; user?:{login?:string}; created_at:string; }
 interface GHReview { id:number; body?:string; html_url:string; user?:{login?:string}; submitted_at?:string; state?:string; }
 interface GHCompare { files?:Array<{filename:string;previous_filename?:string}>; }
@@ -41,13 +42,12 @@ export class GitHubCollector {
   private async paged<T>(url:string,limit=1000):Promise<T[]>{const out:T[]=[];for(let page=1;out.length<limit;page++){const join=url.includes('?')?'&':'?',batch=await this.get<T[]>(`${url}${join}per_page=100&page=${page}`);out.push(...batch);if(batch.length<100)break;}return out.slice(0,limit);}
   private async mergedPullRequests(owner:string,repo:string):Promise<GitHubPR[]>{const merged:GitHubPR[]=[];for(let page=1;merged.length<this.maxPullRequests&&page<=20;page++){const batch=await this.get<GitHubPR[]>(`https://api.github.com/repos/${owner}/${repo}/pulls?state=closed&sort=updated&direction=desc&per_page=100&page=${page}`);merged.push(...batch.filter(p=>p.merged_at));if(batch.length<100)break;}return merged.slice(0,this.maxPullRequests);}
 
-  private async changedAfterReviewIds(owner:string,repo:string,pr:GitHubPR,comments:GHReviewComment[],resolvedIds:Set<number>):Promise<Set<number>> {
-    const changed=new Set<number>();
-    const head=pr.head?.sha;
-    if(!this.deepEvidence||!head||!resolvedIds.size)return changed;
+  private async postReviewChangeState(owner:string,repo:string,pr:GitHubPR,comments:GHReviewComment[]):Promise<{changed:Set<number>;checked:Set<number>}> {
+    const changed=new Set<number>(),checked=new Set<number>(),head=pr.head?.sha;
+    if(!this.deepEvidence||!head)return{changed,checked};
     const groups=new Map<string,GHReviewComment[]>();
     for(const comment of comments){
-      if(!resolvedIds.has(comment.id)||!comment.path)continue;
+      if(comment.in_reply_to_id||!comment.path)continue;
       const base=comment.commit_id||comment.original_commit_id;
       if(!base||base===head)continue;
       groups.set(base,[...(groups.get(base)??[]),comment]);
@@ -58,12 +58,12 @@ export class GitHubCollector {
         this.deepComparisonCount++;
         const comparison=await this.get<GHCompare>(`https://api.github.com/repos/${owner}/${repo}/compare/${base}...${head}`);
         const files=new Set((comparison.files??[]).flatMap(f=>[f.filename,f.previous_filename].filter((x):x is string=>Boolean(x))));
-        for(const comment of groups.get(base)??[])if(comment.path&&files.has(comment.path))changed.add(comment.id);
+        for(const comment of groups.get(base)??[]){checked.add(comment.id);if(comment.path&&files.has(comment.path))changed.add(comment.id);}
       }catch{
-        // Deep evidence is an optional strengthening signal; collection must remain usable if comparison fails.
+        // Deep evidence is optional. Failed comparisons remain unchecked rather than being treated as rejection.
       }
     }
-    return changed;
+    return{changed,checked};
   }
 
   private async collectPullRequest(repository:string,owner:string,repo:string,pr:GitHubPR):Promise<ReviewRecord[]> {
@@ -73,9 +73,9 @@ export class GitHubCollector {
       this.includeIssueComments?this.paged<GHIssueComment>(`https://api.github.com/repos/${owner}/${repo}/issues/${pr.number}/comments`,300):Promise.resolve([] as GHIssueComment[]),
       this.resolvedCommentIds(owner,repo,pr.number).catch(()=>new Set<number>())
     ]);
-    const changedIds=await this.changedAfterReviewIds(owner,repo,pr,comments,resolvedIds);
+    const changeState=await this.postReviewChangeState(owner,repo,pr,comments),responses=inferAuthorReviewResponses(comments,pr.user?.login);
     const records:ReviewRecord[]=[];
-    for(const c of comments)if(c.body?.trim())records.push({id:`rc-${c.id}`,repo:repository,prNumber:pr.number,prTitle:pr.title,author:pr.user?.login,reviewer:c.user?.login??'unknown',body:c.body,path:c.path,createdAt:c.created_at,url:c.html_url,resolved:resolvedIds.has(c.id),changedAfterReview:changedIds.has(c.id),source:'review-comment'});
+    for(const c of comments)if(c.body?.trim())records.push({id:`rc-${c.id}`,repo:repository,prNumber:pr.number,prTitle:pr.title,author:pr.user?.login,reviewer:c.user?.login??'unknown',body:c.body,path:c.path,createdAt:c.created_at,url:c.html_url,resolved:resolvedIds.has(c.id),changedAfterReview:changeState.changed.has(c.id),deepEvidenceChecked:changeState.checked.has(c.id),explicitResponse:responses.get(c.id),source:'review-comment'});
     for(const r of reviews)if(r.body?.trim())records.push({id:`rv-${r.id}`,repo:repository,prNumber:pr.number,prTitle:pr.title,author:pr.user?.login,reviewer:r.user?.login??'unknown',body:r.body,createdAt:r.submitted_at??new Date().toISOString(),url:r.html_url,accepted:r.state==='APPROVED',source:'review'});
     for(const c of issueComments)if(c.body?.trim())records.push({id:`ic-${c.id}`,repo:repository,prNumber:pr.number,prTitle:pr.title,author:pr.user?.login,reviewer:c.user?.login??'unknown',body:c.body,createdAt:c.created_at,url:c.html_url,source:'issue-comment'});
     return records;
@@ -87,9 +87,9 @@ export class GitHubCollector {
     const merged=await this.mergedPullRequests(owner,repo),byPr=new Map<number,ReviewRecord[]>();
     if(previous?.repository===repository)for(const record of previous.records)byPr.set(record.prNumber,[...(byPr.get(record.prNumber)??[]),record]);
     const records:ReviewRecord[]=[],prUpdatedAt:Record<string,string>={};let fetchedPullRequests=0,cachedPullRequests=0,position=0;
-    for(const pr of merged){position++;prUpdatedAt[String(pr.number)]=pr.updated_at;const reusable=previous?.repository===repository&&previous.prUpdatedAt[String(pr.number)]===pr.updated_at&&byPr.has(pr.number);if(reusable){cachedPullRequests++;records.push(...(byPr.get(pr.number)??[]));process.stderr.write(`\rCollecting reviews ${position}/${merged.length} (PR #${pr.number}, cached)`);continue;}fetchedPullRequests++;process.stderr.write(`\rCollecting reviews ${position}/${merged.length} (PR #${pr.number})`);records.push(...await this.collectPullRequest(repository,owner,repo,pr));}
+    for(const pr of merged){position++;prUpdatedAt[String(pr.number)]=pr.updated_at;const reusable=previous?.schemaVersion===2&&previous.repository===repository&&previous.prUpdatedAt[String(pr.number)]===pr.updated_at&&byPr.has(pr.number);if(reusable){cachedPullRequests++;records.push(...(byPr.get(pr.number)??[]));process.stderr.write(`\rCollecting reviews ${position}/${merged.length} (PR #${pr.number}, cached)`);continue;}fetchedPullRequests++;process.stderr.write(`\rCollecting reviews ${position}/${merged.length} (PR #${pr.number})`);records.push(...await this.collectPullRequest(repository,owner,repo,pr));}
     process.stderr.write('\n');
-    const state:GitHubCollectionState={schemaVersion:1,repository,generatedAt:new Date().toISOString(),prUpdatedAt,records};
+    const state:GitHubCollectionState={schemaVersion:2,repository,generatedAt:new Date().toISOString(),prUpdatedAt,records};
     return{records,state,stats:{pullRequests:merged.length,fetchedPullRequests,cachedPullRequests,deepComparisons:this.deepComparisonCount}};
   }
   async collect(repository:string){return(await this.collectWithState(repository)).records;}
