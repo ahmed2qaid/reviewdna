@@ -45,11 +45,15 @@ The target is a production-quality v1.0, not a toy demo.
 ## 0.5 — Incremental engine
 - ✅ `.reviewdna/` PR-state cache using GitHub `updated_at`
 - ✅ incremental PR collection
-- content hashes for non-GitHub inputs
-- resumable pipeline checkpoints
-- cost estimator for optional LLM/embedding stages
-- ✅ redaction and automatic raw-cache disablement under redaction
-- richer secret/PII redaction
+- ✅ stable content hashes for GitHub and fixture inputs/options
+- ✅ versioned resumable pipeline checkpoints with strict repository/input/options validation
+- ✅ `--resume`, checkpoint override and checkpoint-disable controls
+- ✅ token/cost preflight for optional embedding and LLM stages
+- ✅ user-supplied per-million pricing with aggregate remote-cost budget guard
+- ✅ machine-readable `reviewdna-cost.json`
+- ✅ redaction and automatic raw-cache/checkpoint disablement under redaction
+- ✅ targeted secret/PII redaction while preserving surrounding prose
+- ✅ cache/checkpoint compatibility regression coverage
 
 ## 0.6 — GitHub-native workflow
 - ✅ composite GitHub Action with artifact upload and smoke test
@@ -57,6 +61,7 @@ The target is a production-quality v1.0, not a toy demo.
 - ✅ local Watch mode with JSON/Markdown deltas
 - ✅ richer lifecycle/scope/documentation delta classification
 - ✅ cached scheduled Watch workflow example for fork-based deployments
+- ✅ Action support for semantic docs, resume/checkpoints, sensitive redaction and cost controls
 - ✅ tracked human `review` / `ignore` / `promote` / `override` decision file
 - ✅ local evidence-backed Knowledge Proposal review bundle
 - ✅ explicit dry-run-first GitHub publishing of Knowledge Proposals as review Pull Requests

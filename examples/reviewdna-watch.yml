@@ -24,6 +24,8 @@ jobs:
           max-prs: '500'
           min-evidence: '3'
           use-cache: 'true'
+          resume: 'true'
+          use-checkpoints: 'true'
           deep-evidence: 'true'
           clusterer: deterministic
           semantic-docs: 'true'
