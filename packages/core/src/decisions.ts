@@ -44,5 +44,6 @@ export function applyHumanDecisions(result:AnalysisResult,file:DecisionsFile):{r
 }
 
 export function decisionTemplate(rules:EngineeringRule[]):DecisionsFile {
-  return {version:1,decisions:rules.map(rule=>({fingerprint:rule.fingerprint,action:'review' as const,reason:'Change action to ignore/promote/override after human review.'}))};
+  const fingerprints=[...new Set(rules.map(rule=>rule.fingerprint))];
+  return {version:1,decisions:fingerprints.map(fingerprint=>({fingerprint,action:'review' as const,reason:'Change action to ignore/promote/override after human review.'}))};
 }
