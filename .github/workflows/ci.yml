@@ -22,11 +22,13 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run benchmark
-      - run: npm run demo
+      - run: npm run demo:site
       - uses: actions/upload-artifact@v4
         with:
           name: reviewdna-demo-node-${{ matrix.node }}
-          path: demo-output/
+          path: |
+            demo-output/
+            _site/
   action-smoke:
     needs: test
     runs-on: ubuntu-latest
