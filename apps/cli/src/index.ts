@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { applyDocumentationCoverage, applyHumanDecisions, compareAnalysisResults, decisionTemplate, discoverRules, discoverRulesSemantic, LocalFeatureEmbeddingProvider, redactAnalysis, type EmbeddingProvider } from '@reviewdna/core';
+import { applyDocumentationCoverage, applyHumanDecisions, applySemanticDocumentationCoverage, compareAnalysisResults, decisionTemplate, discoverRules, discoverRulesSemantic, LocalFeatureEmbeddingProvider, redactAnalysis, type EmbeddingProvider } from '@reviewdna/core';
 import { GitHubCollector } from '@reviewdna/github';
 import type { GitHubCollectionState } from '@reviewdna/github';
 import { GitHubProposalPublisher, KNOWLEDGE_PROPOSAL_FILES, type KnowledgeProposalFile } from '@reviewdna/github/publisher';
@@ -16,7 +16,7 @@ const flag = (args:string[], name:string, fallback?:string) => { const i=args.in
 const has = (args:string[], name:string) => args.includes(name);
 
 function help() {
-  console.log(`ReviewDNA ${VERSION}\n\nYour reviews already contain your engineering DNA.\n\nCommands:\n  reviewdna analyze owner/repo [--max-prs 100] [--min-evidence 2] [--out reviewdna-output] [--clusterer deterministic|semantic] [--embedding-provider local|ollama|openai-compatible] [--semantic-threshold N] [--issue-comments] [--include-bots] [--redact] [--redact-evidence] [--no-cache] [--cache-dir .reviewdna] [--provider deterministic|ollama|openai-compatible] [--deep-evidence] [--decisions reviewdna.decisions.json]\n  reviewdna analyze-fixture file.json [--min-evidence 2] [--out reviewdna-output] [--clusterer deterministic|semantic] [--embedding-provider ...] [--provider ...]\n  reviewdna export result.json --format agents|claude|cursor|contributing|markdown\n  reviewdna compare before.json after.json\n  reviewdna decisions-template result.json [--out reviewdna.decisions.json]\n  reviewdna proposal result.json [--out reviewdna-proposal]\n  reviewdna publish-proposal owner/repo reviewdna-proposal [--branch reviewdna/proposal-id] [--base main] [--apply]\n  reviewdna watch owner/repo [analyze options] [--out reviewdna-watch] [--baseline-file path] [--fail-on-changes]\n  reviewdna doctor\n  reviewdna --version\n\nSemantic clustering options:\n  --clusterer semantic --embedding-provider local\n  --clusterer semantic --embedding-provider ollama [--embedding-model nomic-embed-text] [--embedding-url http://127.0.0.1:11434]\n  --clusterer semantic --embedding-provider openai-compatible --embedding-model MODEL --embedding-url URL\n  --semantic-threshold N\n\nAI wording refinement options (separate, explicit opt-in):\n  --provider ollama --model qwen3:8b [--provider-url http://127.0.0.1:11434]\n  --provider openai-compatible --model MODEL [--provider-url URL]\n  --max-refine-rules N\n  --provider-continue-on-error\n\nProposal publishing is dry-run by default. Add --apply for an explicit GitHub write.\n\nEnvironment:\n  GITHUB_TOKEN\n  REVIEWDNA_EMBEDDING_BASE_URL\n  REVIEWDNA_EMBEDDING_API_KEY\n  REVIEWDNA_EMBEDDING_MODEL\n  REVIEWDNA_LLM_BASE_URL\n  REVIEWDNA_LLM_API_KEY\n  REVIEWDNA_LLM_MODEL\n`);
+  console.log(`ReviewDNA ${VERSION}\n\nYour reviews already contain your engineering DNA.\n\nCommands:\n  reviewdna analyze owner/repo [--max-prs 100] [--min-evidence 2] [--out reviewdna-output] [--clusterer deterministic|semantic] [--embedding-provider local|ollama|openai-compatible] [--semantic-threshold N] [--semantic-docs] [--documentation-semantic-threshold N] [--issue-comments] [--include-bots] [--redact] [--redact-evidence] [--no-cache] [--cache-dir .reviewdna] [--provider deterministic|ollama|openai-compatible] [--deep-evidence] [--decisions reviewdna.decisions.json]\n  reviewdna analyze-fixture file.json [--min-evidence 2] [--out reviewdna-output] [--clusterer deterministic|semantic] [--embedding-provider ...] [--provider ...]\n  reviewdna export result.json --format agents|claude|cursor|contributing|markdown\n  reviewdna compare before.json after.json\n  reviewdna decisions-template result.json [--out reviewdna.decisions.json]\n  reviewdna proposal result.json [--out reviewdna-proposal]\n  reviewdna publish-proposal owner/repo reviewdna-proposal [--branch reviewdna/proposal-id] [--base main] [--apply]\n  reviewdna watch owner/repo [analyze options] [--out reviewdna-watch] [--baseline-file path] [--fail-on-changes]\n  reviewdna doctor\n  reviewdna --version\n\nSemantic clustering options:\n  --clusterer semantic --embedding-provider local\n  --clusterer semantic --embedding-provider ollama [--embedding-model nomic-embed-text] [--embedding-url http://127.0.0.1:11434]\n  --clusterer semantic --embedding-provider openai-compatible --embedding-model MODEL --embedding-url URL\n  --semantic-threshold N\n\nSemantic documentation options (independent opt-in):\n  --semantic-docs [--documentation-semantic-threshold N]\n  Uses the same --embedding-provider / --embedding-model / --embedding-url configuration.\n\nAI wording refinement options (separate, explicit opt-in):\n  --provider ollama --model qwen3:8b [--provider-url http://127.0.0.1:11434]\n  --provider openai-compatible --model MODEL [--provider-url URL]\n  --max-refine-rules N\n  --provider-continue-on-error\n\nProposal publishing is dry-run by default. Add --apply for an explicit GitHub write.\n\nEnvironment:\n  GITHUB_TOKEN\n  REVIEWDNA_EMBEDDING_BASE_URL\n  REVIEWDNA_EMBEDDING_API_KEY\n  REVIEWDNA_EMBEDDING_MODEL\n  REVIEWDNA_LLM_BASE_URL\n  REVIEWDNA_LLM_API_KEY\n  REVIEWDNA_LLM_MODEL\n`);
 }
 
 async function loadCache(path:string):Promise<GitHubCollectionState|undefined> { try { return JSON.parse(await readFile(path,'utf8')) as GitHubCollectionState; } catch { return undefined; } }
@@ -43,10 +43,10 @@ function providerFromArgs(args:string[]):ReviewDNAProvider|undefined {
   throw new Error(`Unknown provider: ${kind}. Use deterministic, ollama, or openai-compatible.`);
 }
 
-function embeddingProviderFromArgs(args:string[]):EmbeddingProvider|undefined {
+function embeddingProviderFromArgs(args:string[],force=false):EmbeddingProvider|undefined {
   const clusterer=flag(args,'--clusterer','deterministic')!;
-  if(clusterer==='deterministic')return undefined;
-  if(clusterer!=='semantic')throw new Error(`Unknown clusterer: ${clusterer}. Use deterministic or semantic.`);
+  if(clusterer!=='deterministic'&&clusterer!=='semantic')throw new Error(`Unknown clusterer: ${clusterer}. Use deterministic or semantic.`);
+  if(!force&&clusterer==='deterministic')return undefined;
   const kind=flag(args,'--embedding-provider','local')!;
   if(kind==='local')return new LocalFeatureEmbeddingProvider();
   if(kind==='ollama'){
@@ -72,6 +72,16 @@ async function discoverFromArgs(records:ReviewRecord[],repository:string,source:
   if(provider.name.startsWith('openai-compatible:'))process.stderr.write('ReviewDNA: remote embedding provider enabled; classified review text will be sent to the configured endpoint for vectorization.\n');
   process.stderr.write(`ReviewDNA: semantic clustering with ${provider.name}${threshold!==undefined?` at threshold ${threshold}`:''}. Embeddings can group evidence but cannot create rules.\n`);
   return discoverRulesSemantic(records,repository,source,provider,{minEvidence,includeBots,...(threshold!==undefined?{threshold}:{})});
+}
+
+async function maybeApplySemanticDocumentation(result:AnalysisResult,docs:Array<{path:string;content:string}>,args:string[]):Promise<AnalysisResult>{
+  if(!has(args,'--semantic-docs'))return result;
+  const provider=embeddingProviderFromArgs(args,true)!;
+  const rawThreshold=flag(args,'--documentation-semantic-threshold'),threshold=rawThreshold===undefined?undefined:Number(rawThreshold);
+  if(threshold!==undefined&&(!Number.isFinite(threshold)||threshold<=0||threshold>1))throw new Error('--documentation-semantic-threshold must be > 0 and <= 1.');
+  if(provider.name.startsWith('openai-compatible:'))process.stderr.write('ReviewDNA: remote semantic documentation matching enabled; rule text and repository instruction fragments will be sent to the configured embedding endpoint.\n');
+  process.stderr.write(`ReviewDNA: semantic documentation matching with ${provider.name}${threshold!==undefined?` at threshold ${threshold}`:''}. Lexical matches remain preserved.\n`);
+  return applySemanticDocumentationCoverage(result,docs,provider,{...(threshold!==undefined?{threshold}:{})});
 }
 
 async function maybeRefine(result:AnalysisResult,args:string[]):Promise<AnalysisResult> {
@@ -113,7 +123,7 @@ async function save(result:AnalysisResult,outDir:string) {
 }
 
 function summary(r:AnalysisResult) {
-  console.log(`\nReviewDNA 🧬\n\nRepository: ${r.summary.repository}\nReviews analyzed: ${r.summary.reviewsAnalyzed}\nPull requests: ${r.summary.pullRequests}\nReviewers: ${r.summary.reviewers}\nRules discovered: ${r.summary.rules}\nHigh-confidence: ${r.summary.highConfidenceRules}\nConflicting: ${r.summary.conflictingRules}\nStale: ${r.summary.staleRules}\nDocumentation coverage: ${r.summary.documentationCoverage}%\nDocumentation drift: ${r.summary.documentationDrift}\nClusterer: ${r.metadata.clusterer??'deterministic'}${r.metadata.embeddingProvider?` (${r.metadata.embeddingProvider}${r.metadata.semanticThreshold!==undefined?`, threshold ${r.metadata.semanticThreshold}`:''})`:''}\nMode: ${r.metadata.mode}${r.metadata.provider?` (${r.metadata.provider})`:''}\n`);
+  console.log(`\nReviewDNA 🧬\n\nRepository: ${r.summary.repository}\nReviews analyzed: ${r.summary.reviewsAnalyzed}\nPull requests: ${r.summary.pullRequests}\nReviewers: ${r.summary.reviewers}\nRules discovered: ${r.summary.rules}\nHigh-confidence: ${r.summary.highConfidenceRules}\nConflicting: ${r.summary.conflictingRules}\nStale: ${r.summary.staleRules}\nDocumentation coverage: ${r.summary.documentationCoverage}%\nDocumentation drift: ${r.summary.documentationDrift}\nDocumentation matcher: ${r.metadata.documentationMatcher??'lexical'}${r.metadata.documentationEmbeddingProvider?` (${r.metadata.documentationEmbeddingProvider}${r.metadata.documentationSemanticThreshold!==undefined?`, threshold ${r.metadata.documentationSemanticThreshold}`:''})`:''}\nClusterer: ${r.metadata.clusterer??'deterministic'}${r.metadata.embeddingProvider?` (${r.metadata.embeddingProvider}${r.metadata.semanticThreshold!==undefined?`, threshold ${r.metadata.semanticThreshold}`:''})`:''}\nMode: ${r.metadata.mode}${r.metadata.provider?` (${r.metadata.provider})`:''}\n`);
 }
 
 async function analyzeRepository(repo:string,args:string[]):Promise<{result:AnalysisResult;out:string}> {
@@ -128,6 +138,7 @@ async function analyzeRepository(repo:string,args:string[]):Promise<{result:Anal
   console.log(`Collection: ${collection.stats.fetchedPullRequests} fetched PRs, ${collection.stats.cachedPullRequests} reused from local cache, ${collection.stats.deepComparisons} deep evidence comparisons.`);
   let result=await discoverFromArgs(collection.records,repo,'github',args,minEvidence);
   result=applyDocumentationCoverage(result,docs);
+  result=await maybeApplySemanticDocumentation(result,docs,args);
   result=await maybeRefine(result,args);
   result=await maybeApplyDecisions(result,args);
   if(redacting) result=redactAnalysis(result,{reviewers:true,paths:true,evidenceBodies:has(args,'--redact-evidence')});
