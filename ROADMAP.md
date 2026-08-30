@@ -57,7 +57,7 @@ The target is a production-quality v1.0, not a toy demo.
 
 ## 0.6 — GitHub-native workflow
 - ✅ composite GitHub Action with artifact upload and smoke test
-- stable tagged Action distribution
+- ✅ stable tagged Action distribution (`v0.1.0`)
 - ✅ local Watch mode with JSON/Markdown deltas
 - ✅ richer lifecycle/scope/documentation delta classification
 - ✅ cached scheduled Watch workflow example for fork-based deployments
