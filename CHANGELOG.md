@@ -32,3 +32,9 @@
 - Added Ollama `/api/embed` and OpenAI-compatible `/embeddings` providers, with embedding configuration separated from optional wording refinement.
 - Added CLI controls for deterministic/semantic clustering, embedding provider/model/endpoint and semantic threshold.
 - Added auditable clusterer/provider/threshold metadata to `reviewdna.json` plus semantic unit tests and a labeled paraphrase regression benchmark.
+- Added fingerprint-based parent/child rule relationships for broader and narrower convention scopes.
+- Added conservative supersession inference that requires non-overlapping evidence windows, opposite guidance over related concepts, minimum evidence, and sufficient replacement confidence.
+- Superseded historical guidance is preserved with status `superseded` and lineage links instead of being deleted or penalizing the active replacement as an ongoing conflict.
+- Added evidence-derived rule timelines (`introduced`, `reinforced`, `adopted`, `rejected-signal`, `superseded`) with PR/evidence provenance.
+- Watch comparisons now surface parent, child, supersedes, superseded-by, and timeline changes.
+- Dashboard now includes parent/child/superseded metrics, relationship badges, and expandable evolution timelines.
