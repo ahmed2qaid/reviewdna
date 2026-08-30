@@ -47,9 +47,10 @@ test('dashboard renders hotspots, automation candidates and a local share-card d
   assert.match(html,/security-scan/);
   assert.match(html,/download="reviewdna-share-card\.svg"/);
   assert.match(html,/data:image\/svg\+xml/);
+  assert.match(html,/Synthetic fixture demonstrating ReviewDNA capabilities/);
 });
 
-test('share card renderer produces a standalone escaped SVG summary',()=>{
+test('share card renderer produces a standalone escaped and source-labeled SVG summary',()=>{
   const result=applyAnalysisInsights(analysis());
   result.summary.repository='acme/<repo>';
   const svg=renderShareSvg(result);
@@ -58,4 +59,5 @@ test('share card renderer produces a standalone escaped SVG summary',()=>{
   assert.ok(svg.includes('acme/&lt;repo&gt;'));
   assert.ok(!svg.includes('acme/<repo>'));
   assert.match(svg,/High confidence/);
+  assert.match(svg,/Synthetic demo/);
 });
