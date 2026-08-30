@@ -86,10 +86,33 @@ export function redactAnalysis(input:AnalysisResult,options:RedactionOptions={re
   const result=JSON.parse(JSON.stringify(input)) as AnalysisResult;let sensitiveRedactions=0;
   const scrub=(text:string|undefined)=>{if(text===undefined||!options.sensitiveText)return text;const redacted=redactSensitiveText(text);sensitiveRedactions+=redacted.replacements;return redacted.text;};
   for(const rule of result.rules){
-    if(options.sensitiveText){rule.text=scrub(rule.text)??rule.text;if(rule.originalText!==undefined)rule.originalText=scrub(rule.originalText);if(rule.humanDecision?.reason!==undefined)rule.humanDecision.reason=scrub(rule.humanDecision.reason);if(rule.humanDecision?.overrideText!==undefined)rule.humanDecision.overrideText=scrub(rule.humanDecision.overrideText);}
-    if(options.paths){rule.scope=rule.scope.map(()=>'[redacted-scope]');rule.documentedBy=rule.documentedBy.map(()=>'[redacted-document]');rule.documentationConflicts=rule.documentationConflicts.map(()=>'[redacted-document]');if(rule.documentationEvidence)rule.documentationEvidence=rule.documentationEvidence.map(match=>({...match,path:'[redacted-document]'}));}
-    for(const e of rule.evidence){if(options.reviewers)e.reviewer=alias(e.reviewer);if(options.paths&&e.path)e.path='[redacted-path]';if(options.evidenceBodies)e.body='[redacted review text]';else if(options.sensitiveText)e.body=scrub(e.body)??e.body;}
+    if(options.sensitiveText){
+      rule.text=scrub(rule.text)??rule.text;
+      if(rule.originalText!==undefined)rule.originalText=scrub(rule.originalText);
+      if(rule.humanDecision?.reason!==undefined)rule.humanDecision.reason=scrub(rule.humanDecision.reason);
+      if(rule.humanDecision?.overrideText!==undefined)rule.humanDecision.overrideText=scrub(rule.humanDecision.overrideText);
+    }
+    if(options.paths){
+      rule.scope=rule.scope.map(()=>'[redacted-scope]');
+      rule.documentedBy=rule.documentedBy.map(()=>'[redacted-document]');
+      rule.documentationConflicts=rule.documentationConflicts.map(()=>'[redacted-document]');
+      if(rule.documentationEvidence)rule.documentationEvidence=rule.documentationEvidence.map(match=>({...match,path:'[redacted-document]'}));
+    }else if(options.sensitiveText){
+      rule.scope=rule.scope.map(value=>scrub(value)??value);
+      rule.documentedBy=rule.documentedBy.map(value=>scrub(value)??value);
+      rule.documentationConflicts=rule.documentationConflicts.map(value=>scrub(value)??value);
+      if(rule.documentationEvidence)rule.documentationEvidence=rule.documentationEvidence.map(match=>({...match,path:scrub(match.path)??match.path}));
+    }
+    for(const e of rule.evidence){
+      if(options.reviewers)e.reviewer=alias(e.reviewer);else if(options.sensitiveText)e.reviewer=scrub(e.reviewer)??e.reviewer;
+      if(options.paths&&e.path)e.path='[redacted-path]';else if(options.sensitiveText&&e.path)e.path=scrub(e.path);
+      if(options.sensitiveText)e.url=scrub(e.url)??e.url;
+      if(options.evidenceBodies)e.body='[redacted review text]';else if(options.sensitiveText)e.body=scrub(e.body)??e.body;
+    }
   }
-  if(options.sensitiveText){for(const rejected of result.rejected)rejected.body=scrub(rejected.body)??rejected.body;result.metadata.sensitiveRedactions=sensitiveRedactions;}
+  if(options.sensitiveText){
+    for(const rejected of result.rejected){rejected.body=scrub(rejected.body)??rejected.body;rejected.reason=scrub(rejected.reason)??rejected.reason;}
+    result.metadata.sensitiveRedactions=sensitiveRedactions;
+  }
   result.metadata.redacted=true;return result;
 }
