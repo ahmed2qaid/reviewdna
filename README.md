@@ -54,6 +54,12 @@ demo-output/reviewdna-report.html
 
 The fixture is synthetic and exists only to demonstrate the product safely. A real repository analysis uses the same engine.
 
+### Real dashboard preview
+
+![ReviewDNA dashboard — synthetic public demo](docs/assets/reviewdna-dashboard.jpg)
+
+> Real screenshot generated from the reproducible ReviewDNA public-demo artifact. The underlying reviews are synthetic example data, not real repository policy.
+
 ### Example result
 
 ```text
