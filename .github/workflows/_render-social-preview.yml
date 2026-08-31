@@ -1,0 +1,45 @@
+name: Render ReviewDNA Social Preview
+
+on:
+  push:
+    branches:
+      - docs/social-preview-png
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: docs/social-preview-png
+
+      - name: Install deterministic SVG renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin
+
+      - name: Render 1200x630 social preview
+        run: |
+          rsvg-convert \
+            --width 1200 \
+            --height 630 \
+            --keep-aspect-ratio \
+            --output docs/assets/reviewdna-social-preview.png \
+            docs/assets/reviewdna-showcase.svg
+          file docs/assets/reviewdna-social-preview.png
+
+      - name: Commit rendered preview
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/assets/reviewdna-social-preview.png
+          if git diff --cached --quiet; then
+            echo "No preview change to commit."
+            exit 0
+          fi
+          git commit -m "docs: add ready-to-upload social preview [skip ci]"
+          git push origin HEAD:docs/social-preview-png
