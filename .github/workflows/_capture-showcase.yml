@@ -68,15 +68,15 @@ jobs:
           path = Path('README.md')
           text = path.read_text(encoding='utf-8')
           anchor = "The fixture is synthetic and exists only to demonstrate the product safely. A real repository analysis uses the same engine.\n\n### Example result"
-          replacement = """The fixture is synthetic and exists only to demonstrate the product safely. A real repository analysis uses the same engine.
-
-### Real dashboard preview
-
-![ReviewDNA dashboard — synthetic public demo](docs/assets/reviewdna-dashboard.jpg)
-
-> Real screenshot generated from the reproducible ReviewDNA public-demo artifact. The underlying reviews are synthetic example data, not real repository policy.
-
-### Example result"""
+          replacement = (
+              "The fixture is synthetic and exists only to demonstrate the product safely. "
+              "A real repository analysis uses the same engine.\n\n"
+              "### Real dashboard preview\n\n"
+              "![ReviewDNA dashboard — synthetic public demo](docs/assets/reviewdna-dashboard.jpg)\n\n"
+              "> Real screenshot generated from the reproducible ReviewDNA public-demo artifact. "
+              "The underlying reviews are synthetic example data, not real repository policy.\n\n"
+              "### Example result"
+          )
           if anchor not in text:
               raise SystemExit('README showcase anchor was not found')
           path.write_text(text.replace(anchor, replacement, 1), encoding='utf-8')
@@ -92,5 +92,5 @@ jobs:
             echo "No showcase changes to commit."
             exit 0
           fi
-          git commit -m "docs: add real dashboard screenshot"
+          git commit -m "docs: add real dashboard screenshot [skip ci]"
           git push origin HEAD:feat/real-dashboard-showcase
