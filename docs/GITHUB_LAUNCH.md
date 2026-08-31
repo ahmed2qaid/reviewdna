@@ -34,9 +34,15 @@ The repository currently has no Topics configured. Use a focused set rather than
 
 ## Social preview
 
-Use `docs/assets/reviewdna-showcase.svg` as the source artwork for a repository social-preview image. GitHub currently requires the social preview to be uploaded through repository settings; ReviewDNA does not pretend this can be changed by repository code alone.
+Ready-to-upload repository preview:
 
-The asset is deliberately labeled as a synthetic demo preview and does not claim production metrics from another repository.
+`docs/assets/reviewdna-social-preview.png` — **1200×630 PNG**
+
+Source artwork:
+
+`docs/assets/reviewdna-showcase.svg`
+
+GitHub currently requires the social preview to be uploaded through repository settings; ReviewDNA does not pretend this can be changed by repository code alone. The artwork is deliberately labeled as a synthetic demo preview and does not claim production metrics from another repository.
 
 ## First-visit story
 
@@ -85,6 +91,7 @@ Completed:
 - ✅ GHCR release image built from the release commit, pushed, pulled back from GHCR, and smoke-tested before the GitHub Release was created.
 - ✅ repository README/showcase, Mermaid architecture, Quick Start, badges, demo scenario, launch copy and portfolio copy are committed.
 - ✅ a real dashboard screenshot generated from ReviewDNA's reproducible synthetic public-demo output is committed at `docs/assets/reviewdna-dashboard.jpg` and displayed in the README.
+- ✅ a ready-to-upload 1200×630 social-preview PNG is committed at `docs/assets/reviewdna-social-preview.png`.
 - ✅ the public-demo workflow builds successfully on `main` and falls back to a downloadable workflow artifact while Pages is disabled.
 - ✅ the immutable release workflow now auto-runs only when `VERSION` changes, so ordinary documentation/maintenance commits cannot attempt to move an existing release tag.
 - ✅ Issue #5 reflects the current tagged-Action, demo-artifact and Pages status.
@@ -95,7 +102,7 @@ Administrative launch items still pending:
 - ⏳ If anonymous Docker pulls are desired, change the GHCR `reviewdna` package visibility to **Public**. Authenticated release publication/pull is already verified.
 - ⏳ **Repository Topics are currently empty.** Add the recommended Topics from this file in the repository About settings.
 - ⏳ The repository description is already populated; set the Website field to the Pages URL after Pages activation.
-- ⏳ Upload the repository social preview from `docs/assets/reviewdna-showcase.svg` (or an exported PNG of the same artwork).
+- ⏳ Upload `docs/assets/reviewdna-social-preview.png` in **Settings → General → Social preview**.
 - ⏳ After Pages activation, verify the live public-demo URL and then mark the remaining Pages item in Issue #5 complete.
 
 ## Suggested launch post
