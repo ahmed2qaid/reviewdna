@@ -4,9 +4,9 @@ This file keeps the discovery/launch surface explicit and reproducible. It separ
 
 ## Repository About
 
-Recommended description:
+Current repository description:
 
-> Mine code-review history into evidence-backed engineering rules for humans and AI coding agents.
+> Mine your team's code-review history into evidence-backed engineering rules for AI coding agents.
 
 Recommended website after Pages is enabled:
 
@@ -14,7 +14,7 @@ Recommended website after Pages is enabled:
 
 ## Recommended GitHub topics
 
-Use a focused set rather than keyword stuffing:
+The repository currently has no Topics configured. Use a focused set rather than keyword stuffing:
 
 - `code-review`
 - `developer-tools`
@@ -84,14 +84,19 @@ Completed:
 - ✅ detailed release notes and Changelog explain the changes since `v0.1.0`.
 - ✅ GHCR release image built from the release commit, pushed, pulled back from GHCR, and smoke-tested before the GitHub Release was created.
 - ✅ repository README/showcase, Mermaid architecture, Quick Start, badges, demo scenario, launch copy and portfolio copy are committed.
+- ✅ a real dashboard screenshot generated from ReviewDNA's reproducible synthetic public-demo output is committed at `docs/assets/reviewdna-dashboard.jpg` and displayed in the README.
+- ✅ the public-demo workflow builds successfully on `main` and falls back to a downloadable workflow artifact while Pages is disabled.
+- ✅ the immutable release workflow now auto-runs only when `VERSION` changes, so ordinary documentation/maintenance commits cannot attempt to move an existing release tag.
+- ✅ Issue #5 reflects the current tagged-Action, demo-artifact and Pages status.
 
 Administrative launch items still pending:
 
-- ⏳ Enable GitHub Pages once under **Settings → Pages → Build and deployment → Source: GitHub Actions**. The build/artifact workflow already succeeds without this setting.
+- ⏳ **GitHub Pages is currently disabled for the repository.** Enable it once under **Settings → Pages → Build and deployment → Source: GitHub Actions**. The build/artifact workflow already succeeds without this setting.
 - ⏳ If anonymous Docker pulls are desired, change the GHCR `reviewdna` package visibility to **Public**. Authenticated release publication/pull is already verified.
-- ⏳ Set the repository About description and recommended Topics from this file.
+- ⏳ **Repository Topics are currently empty.** Add the recommended Topics from this file in the repository About settings.
+- ⏳ The repository description is already populated; set the Website field to the Pages URL after Pages activation.
 - ⏳ Upload the repository social preview from `docs/assets/reviewdna-showcase.svg` (or an exported PNG of the same artwork).
-- ⏳ After Pages is enabled, capture real generated dashboard screenshots from the deployed synthetic demo and add them to the README. Do not use hand-drawn fake dashboard screenshots.
+- ⏳ After Pages activation, verify the live public-demo URL and then mark the remaining Pages item in Issue #5 complete.
 
 ## Suggested launch post
 
